@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:project/MyGarden.dart';
 import 'package:project/sign_up.dart';
-
-File? userProfileImage;
+import 'package:project/login.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});

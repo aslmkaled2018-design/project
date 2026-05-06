@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'PlantDetailsPage.dart';
@@ -200,6 +200,33 @@ class _GardenpageState extends State<Gardenpage> {
                       builder: (_) => PlantDetailsPage(Plant: myplants[index]),
                     ),
                   ),
+              onLongPress: () {
+                // ← ضغط طويل يفتح dialog للحذف
+                showDialog(
+                  context: context,
+                  builder:
+                      (context) => AlertDialog(
+                        title: const Text("حذف النبتة"),
+                        content: Text("هل تريد حذف ${myplants[index].name}؟"),
+                        actions: [
+                          TextButton(
+                            child: const Text("لا"),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                          TextButton(
+                            child: const Text(
+                              "نعم",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                            onPressed: () {
+                              setState(() => myplants.removeAt(index));
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+                );
+              },
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
@@ -289,6 +316,8 @@ class plant {
   final String name;
   String? notes, wateringSchedule, location;
   List<HealthRecord> healthRecords;
+
+  String? careInstructions;
 
   String? watering;
   String? light;

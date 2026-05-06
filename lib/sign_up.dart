@@ -1,7 +1,12 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-// متغير عالمي يحفظ اسم المستخدم
+import 'package:flutter/material.dart';
+import 'services/api_service.dart';
+
 String currentUserName = "";
+File? userProfileImage;
+
+// متغير عالمي بيحفظ اسم المستخدم — بيتحدث من login وregister
 
 class SignUpFields extends StatefulWidget {
   final VoidCallback onBack;
@@ -12,25 +17,57 @@ class SignUpFields extends StatefulWidget {
 }
 
 class _SignUpFieldsState extends State<SignUpFields> {
-  GlobalKey<FormState> formstate = GlobalKey();
-
-  // ← أضف الـ controllers دول
+  final GlobalKey<FormState> formstate = GlobalKey();
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+  bool isLoading = false;
 
   final emailreg = RegExp(
     r'^[A-Za-z0-9]+@[A-Za-z]+\.com$',
     caseSensitive: false,
   );
 
+  Future<void> handleRegister() async {
+    if (!formstate.currentState!.validate()) return;
+
+    setState(() => isLoading = true);
+
+    final result = await ApiService.register(
+      firstName: firstNameController.text.trim(),
+      lastName: lastNameController.text.trim(),
+      email: emailController.text.trim(),
+      password: passwordController.text,
+      phone: phoneController.text.trim(),
+    );
+
+    setState(() => isLoading = false);
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      // ← بنحفظ الاسم بعد التسجيل
+      currentUserName =
+          '${firstNameController.text.trim()} ${lastNameController.text.trim()}';
+      Navigator.of(context).pushReplacementNamed('/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'فشل إنشاء الحساب'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Widget buildTextField(
     String label, {
     bool isPassword = false,
     bool isEmail = false,
-    bool isconfirmPassword = false,
+    bool isConfirmPassword = false,
     TextInputType? keyboardType,
     TextEditingController? controller,
   }) {
@@ -41,9 +78,9 @@ class _SignUpFieldsState extends State<SignUpFields> {
         validator: (value) {
           if (value!.isEmpty) return 'الحقل فارغ';
           if (isEmail && !emailreg.hasMatch(value.trim())) {
-            return 'ادخل بريد الكتروني صحيح';
+            return 'ادخل بريد إلكتروني صحيح';
           }
-          if (isconfirmPassword && value != passwordController.text) {
+          if (isConfirmPassword && value != passwordController.text) {
             return 'كلمة المرور غير متطابقة';
           }
           return null;
@@ -76,7 +113,7 @@ class _SignUpFieldsState extends State<SignUpFields> {
           key: const ValueKey('signup'),
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(height: 22),
+            const SizedBox(height: 22),
             const Text(
               'إنشاء حساب جديد',
               style: TextStyle(
@@ -94,9 +131,14 @@ class _SignUpFieldsState extends State<SignUpFields> {
               'البريد الإلكتروني',
               keyboardType: TextInputType.emailAddress,
               isEmail: true,
+              controller: emailController,
             ),
             const SizedBox(height: 15),
-            buildTextField('رقم الهاتف', keyboardType: TextInputType.phone),
+            buildTextField(
+              'رقم الهاتف',
+              keyboardType: TextInputType.phone,
+              controller: phoneController,
+            ),
             const SizedBox(height: 15),
             buildTextField(
               'كلمة المرور',
@@ -108,7 +150,7 @@ class _SignUpFieldsState extends State<SignUpFields> {
               'تأكيد كلمة المرور',
               isPassword: true,
               controller: confirmPasswordController,
-              isconfirmPassword: true,
+              isConfirmPassword: true,
             ),
             const SizedBox(height: 25),
             ElevatedButton(
@@ -123,15 +165,18 @@ class _SignUpFieldsState extends State<SignUpFields> {
                   vertical: 10,
                 ),
               ),
-              onPressed: () {
-                if (formstate.currentState!.validate()) {
-                  // ← هنا بيحفظ الاسم
-                  currentUserName =
-                      "${firstNameController.text} ${lastNameController.text}";
-                  Navigator.of(context).pushReplacementNamed('/home');
-                }
-              },
-              child: const Text('إنشاء حساب'),
+              onPressed: isLoading ? null : handleRegister,
+              child:
+                  isLoading
+                      ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                      : const Text('إنشاء حساب'),
             ),
             const SizedBox(height: 10),
             TextButton(
@@ -141,7 +186,7 @@ class _SignUpFieldsState extends State<SignUpFields> {
                 style: TextStyle(color: Colors.white70),
               ),
             ),
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
           ],
         ),
       ),

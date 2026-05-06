@@ -5,6 +5,7 @@ import 'edit_profile.dart';
 import 'help&supportpage.dart';
 import 'languagepage.dart';
 import 'notificatinpage.dart';
+import 'clear_all_history.dart';
 
 import 'themepage.dart';
 
@@ -121,6 +122,20 @@ class _SettingPageState extends State<SettingPage> {
                 context,
                 MaterialPageRoute(builder: (_) => ClearHistoryPage()),
               );
+            },
+          ),
+          _settingCard(
+            Icons.delete_forever_outlined,
+            "مسح جميع البيانات",
+            cardColor,
+            iconBg,
+            shadowColor,
+            textColor,
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ClearAllHistory()),
+              ).then((_) => setState(() {}));
             },
           ),
 

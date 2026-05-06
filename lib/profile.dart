@@ -5,7 +5,6 @@ import 'settingPage/settingpage.dart';
 import 'settingPage/edit_profile.dart';
 import 'MyGarden.dart';
 import 'login.dart';
-
 import 'scan_history_page.dart';
 import 'saved_tips_page.dart';
 

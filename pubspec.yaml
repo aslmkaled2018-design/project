@@ -14,7 +14,9 @@ dependencies:
   provider: ^6.1.2
   image_picker: ^1.0.0
   cupertino_icons: ^1.0.8
-  tflite_flutter: ^0.12.0
+  dio: ^5.4.0
+  shared_preferences: ^2.2.3
+  tflite_flutter: 0.12.1
   image: ^4.1.3
 
 dev_dependencies:
@@ -28,6 +30,9 @@ flutter:
   assets:
     - assets/leaf_validator.tflite
     - assets/disease_classifier.tflite
+    - images/plan1.png
+    - images/plan2.jpg
+    - images/plan3.jpg
 
   fonts:
     - family: poppins

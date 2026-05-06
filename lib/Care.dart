@@ -12,7 +12,59 @@ class InfoSection extends StatelessWidget {
     final textColor = isDark ? Colors.white : Colors.black;
     final subColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
     final cardColor = isDark ? Colors.grey[850]! : Colors.white;
+    const greenColor = Color.fromARGB(255, 56, 114, 64);
 
+    // لو عندنا careInstructions من السيرفر — اعرضها في card واحدة
+    if (plantData.careInstructions != null &&
+        plantData.careInstructions!.isNotEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 220, 242, 220),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.eco, size: 28, color: greenColor),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'إرشادات الرعاية',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: greenColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  plantData.careInstructions!,
+                  style: TextStyle(fontSize: 14, color: subColor, height: 1.7),
+                  textAlign: TextAlign.right,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // لو مفيش رعاية من السيرفر — اعرض الحقول العادية
     final List<Map<String, dynamic>> careInfo = [
       {
         'name': 'الري',
@@ -48,7 +100,10 @@ class InfoSection extends StatelessWidget {
           Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            color: cardColor,
+            decoration: BoxDecoration(
+              color: cardColor,
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Row(
               children: [
                 Container(
@@ -64,23 +119,25 @@ class InfoSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item['name'],
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item['name'],
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      item['value'],
-                      style: TextStyle(fontSize: 13, color: subColor),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        item['value'],
+                        style: TextStyle(fontSize: 13, color: subColor),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

@@ -105,6 +105,8 @@ class _HomepageState extends State<Homepage> {
             const SizedBox(height: 20),
             _sectionTitle("مهام اليوم", textColor),
 
+            // الجزء المهم فقط اللي اتعدل 👇
+            // الجزء المهم فقط اللي اتعدل 👇
             tasks.isEmpty
                 ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
@@ -118,8 +120,13 @@ class _HomepageState extends State<Homepage> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: tasks.length,
                   itemBuilder: (context, index) {
+                    // 👇 السطر ده بيخفي التاسك لو اتعمل Done
+                    if (doneTasks.contains(index)) {
+                      return const SizedBox();
+                    }
+
                     final task = tasks[index];
-                    final isDone = doneTasks.contains(index);
+
                     return Container(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -151,9 +158,7 @@ class _HomepageState extends State<Homepage> {
                           task['plantName'],
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            decoration:
-                                isDone ? TextDecoration.lineThrough : null,
-                            color: isDone ? Colors.grey : textColor,
+                            color: textColor,
                           ),
                         ),
                         subtitle: Column(
@@ -173,13 +178,9 @@ class _HomepageState extends State<Homepage> {
                                     task['disease'],
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 12,
-                                      color: isDone ? Colors.grey : Colors.red,
-                                      decoration:
-                                          isDone
-                                              ? TextDecoration.lineThrough
-                                              : null,
+                                      color: Colors.red,
                                     ),
                                   ),
                                 ),
@@ -202,13 +203,9 @@ class _HomepageState extends State<Homepage> {
                                         .first,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 12,
-                                      color: isDone ? Colors.grey : greenColor,
-                                      decoration:
-                                          isDone
-                                              ? TextDecoration.lineThrough
-                                              : null,
+                                      color: greenColor,
                                     ),
                                   ),
                                 ),
@@ -216,27 +213,30 @@ class _HomepageState extends State<Homepage> {
                             ),
                           ],
                         ),
-                        trailing: Checkbox(
-                          activeColor: greenColor,
-                          value: isDone,
-                          onChanged:
-                              (val) => setState(() {
-                                if (val == true)
-                                  doneTasks.add(index);
-                                else
-                                  doneTasks.remove(index);
-                              }),
-                        ),
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (_) => PlantDetailsPage(Plant: task['plant']),
+
+                        // 👇 الزرار اتعدل
+                        trailing: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: greenColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                          );
-                          setState(() {});
-                        },
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              doneTasks.add(index); // يخفي التاسك
+                            });
+                          },
+                          child: const Text(
+                            'تم',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
                       ),
                     );
                   },

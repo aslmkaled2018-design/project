@@ -27,7 +27,7 @@ class _WelcomeScreensState extends State<WelcomeScreens> {
             },
             children: [
               WelcomePageTemplate(
-                image: 'images/plante1.jpg',
+                image: 'images/plan1.png',
                 icon: Icons.camera_alt_outlined,
                 iconColor: const Color.fromARGB(255, 217, 255, 224),
                 title: 'تعرف على أي نبتة بصورة واحدة',
@@ -56,7 +56,7 @@ class _WelcomeScreensState extends State<WelcomeScreens> {
                 },
               ),
               WelcomePageTemplate(
-                image: 'images/page3.png',
+                image: 'images/plan3.jpg',
                 icon: Icons.date_range_outlined,
                 iconColor: const Color.fromARGB(255, 255, 252, 180),
                 title: 'لن تنسى سقي نباتاتك بعد اليوم',

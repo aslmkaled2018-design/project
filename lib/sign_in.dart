@@ -1,21 +1,57 @@
 import 'package:flutter/material.dart';
-
-GlobalKey<FormState> formstate = GlobalKey();
-String? saved;
-String? savedd;
+import 'services/api_service.dart';
+import 'sign_up.dart';
 
 class Fields extends StatefulWidget {
   final VoidCallback onBack;
-
   const Fields({super.key, required this.onBack});
 
   @override
   State<Fields> createState() => _FieldsState();
 }
 
-final emailReg = RegExp(r'^[A-Za-z0-9]+@[A-Za-z]+\.com$', caseSensitive: false);
-
 class _FieldsState extends State<Fields> {
+  final GlobalKey<FormState> formstate = GlobalKey();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  bool isLoading = false;
+
+  final emailReg = RegExp(
+    r'^[A-Za-z0-9]+@[A-Za-z]+\.com$',
+    caseSensitive: false,
+  );
+
+  Future<void> handleLogin() async {
+    if (!formstate.currentState!.validate()) return;
+
+    setState(() => isLoading = true);
+
+    final result = await ApiService.login(
+      emailController.text.trim(),
+      passwordController.text,
+    );
+
+    print("🔍 Full result: $result");
+
+    setState(() => isLoading = false);
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      // ← الاسم جوه user object
+      currentUserName = result['data']['user']?['fullName'] ?? '';
+      print("👤 fullName: $currentUserName");
+      Navigator.of(context).pushReplacementNamed('/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'فشل تسجيل الدخول'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -33,21 +69,16 @@ class _FieldsState extends State<Fields> {
             ),
           ),
           const SizedBox(height: 20),
-
-          Container(
+          SizedBox(
             width: 220,
             child: TextFormField(
+              controller: emailController,
               validator: (value) {
-                if (value!.isEmpty) {
-                  return 'الحقل فارغ';
-                }
+                if (value!.isEmpty) return 'الحقل فارغ';
                 if (!emailReg.hasMatch(value.trim())) {
-                  return 'هذا المستخدم غير موجود';
+                  return 'بريد إلكتروني غير صحيح';
                 }
                 return null;
-              },
-              onChanged: (value) {
-                saved = value;
               },
               decoration: const InputDecoration(
                 labelText: 'البريد الإلكتروني',
@@ -64,20 +95,14 @@ class _FieldsState extends State<Fields> {
               style: const TextStyle(color: Colors.white),
             ),
           ),
-
           const SizedBox(height: 15),
-
-          Container(
+          SizedBox(
             width: 220,
             child: TextFormField(
+              controller: passwordController,
               validator: (value) {
-                if (value!.isEmpty) {
-                  return 'الحقل فارغ';
-                }
+                if (value!.isEmpty) return 'الحقل فارغ';
                 return null;
-              },
-              onChanged: (value) {
-                savedd = value;
               },
               obscureText: true,
               decoration: const InputDecoration(
@@ -95,9 +120,7 @@ class _FieldsState extends State<Fields> {
               style: const TextStyle(color: Colors.white),
             ),
           ),
-
           const SizedBox(height: 25),
-
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color.fromARGB(255, 18, 112, 65),
@@ -107,19 +130,22 @@ class _FieldsState extends State<Fields> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 10),
             ),
-            onPressed: () {
-              if (formstate.currentState!.validate()) {
-                Navigator.of(context).pushReplacementNamed('/home');
-              }
-            },
-            child: const Text('تسجيل دخول'),
+            onPressed: isLoading ? null : handleLogin,
+            child:
+                isLoading
+                    ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                    : const Text('تسجيل دخول'),
           ),
-
           const SizedBox(height: 10),
-
-          // ← زر الرجوع
           TextButton(
-            onPressed: widget.onBack, // ✅ كده صح
+            onPressed: widget.onBack,
             child: const Text('رجوع', style: TextStyle(color: Colors.white70)),
           ),
         ],

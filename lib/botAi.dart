@@ -2,9 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:project/Disease_translations.dart';
 import 'MyGarden.dart';
-import 'plant_inference_service.dart';
-import 'disease_translations.dart';
+import 'services/api_service.dart';
+import 'Plant_inference_service.dart';
 
 class Botaipage extends StatefulWidget {
   const Botaipage({super.key});
@@ -16,23 +17,27 @@ class Botaipage extends StatefulWidget {
 class _BotaipageState extends State<Botaipage> {
   final ImagePicker picker = ImagePicker();
   final PlantInferenceService _inferenceService = PlantInferenceService();
+  final TextEditingController nameController = TextEditingController();
 
   File? imagefile;
-  bool showSaveButton = false;
+  bool showNameButton = false;
   bool showTreatmentBox = false;
+  bool showSaveButton = false;
   bool isAnalyzing = false;
   String diseaseResult = "";
   String treatmentResult = "";
+  Map<String, String> _careData = {};
 
   @override
   void initState() {
     super.initState();
-    _inferenceService.initModels(); // ← تحميل الموديلين عند فتح الصفحة
+    _inferenceService.initModels();
   }
 
   @override
   void dispose() {
     _inferenceService.dispose();
+    nameController.dispose();
     super.dispose();
   }
 
@@ -44,55 +49,199 @@ class _BotaipageState extends State<Botaipage> {
     if (image != null) {
       setState(() {
         imagefile = File(image.path);
-        showSaveButton = false;
+        showNameButton = false;
         showTreatmentBox = false;
+        showSaveButton = false;
         diseaseResult = "";
         treatmentResult = "";
+        _careData = {};
       });
     }
   }
 
-  // ── التحليل الحقيقي بالموديل ──
   Future<void> analyzeImage() async {
     if (imagefile == null) return;
 
+    print("📸 analyzeImage STARTED");
     setState(() => isAnalyzing = true);
 
-    final result = await _inferenceService.processImage(imagefile!);
+    print("🤖 Calling processImage...");
+    final label = await _inferenceService.processImage(imagefile!);
+    print("🎯 Label returned: $label");
 
-    // مش ورقة نبات
-    if (result.startsWith("INVALID_IMAGE:")) {
+    if (label == "INVALID_IMAGE") {
       setState(() {
         isAnalyzing = false;
-        diseaseResult = result.replaceAll("INVALID_IMAGE: ", "");
-        treatmentResult = "";
+        diseaseResult = "الصورة مش ورقة نبات، ركز على ورقة النبتة وحاول تاني";
+        showNameButton = false;
         showTreatmentBox = false;
         showSaveButton = false;
       });
       return;
     }
 
-    // خطأ في الموديل
-    if (result.startsWith("ERROR")) {
+    if (label.startsWith("ERROR")) {
       setState(() {
         isAnalyzing = false;
         diseaseResult = "حصل خطأ في التحليل، حاول تاني";
-        treatmentResult = "";
+        showNameButton = false;
         showTreatmentBox = false;
         showSaveButton = false;
       });
       return;
     }
 
-    // نتيجة صح - ترجم للعربي
-    final info = diseaseInfo[result] ?? diseaseInfo['healthy']!;
+    print("📚 Getting disease info for: $label");
+    final info = diseaseInfo[label] ?? diseaseInfo['healthy']!;
+    print("📚 Info: $info");
+
+    print("🌐 Calling API...");
+    final serverResult = await ApiService.scanPlant(
+      plantType: info['plantType']!,
+      conditionName: info['conditionName']!,
+      detectedCategory: info['detectedCategory']!,
+    );
+    print("🌐 API result: $serverResult");
+
+    String finalDisease = info['disease']!;
+    String finalTreatment = info['treatment']!;
+
+    if (serverResult['success'] && serverResult['data'] != null) {
+      final data = serverResult['data'];
+      finalDisease = info['disease']!;
+      finalTreatment =
+          data['treatment'] ?? data['careInstructions'] ?? info['treatment']!;
+    }
+
+    print("✅ Final result: $finalDisease");
+
     setState(() {
       isAnalyzing = false;
-      diseaseResult = info['disease']!;
-      treatmentResult = info['treatment']!;
-      showTreatmentBox = true;
-      showSaveButton = true;
+      diseaseResult = finalDisease;
+      treatmentResult = finalTreatment;
+      showNameButton = true;
+      showTreatmentBox = false;
+      showSaveButton = false;
     });
+  }
+
+  // ← جيب رعاية النبتة من السيرفر
+  Future<void> _fetchPlantCare(String plantName) async {
+    final result = await ApiService.getPlantCare(plantName);
+    print("🌱 Care result: $result");
+
+    if (result['success'] && result['data'] != null) {
+      final data = result['data'];
+
+      // ← نتأكد من نوع البيانات
+      dynamic care;
+
+      if (data is List && data.isNotEmpty) {
+        care = data[0];
+      } else if (data is Map) {
+        care = data;
+      }
+
+      if (care is Map<String, dynamic>) {
+        setState(() {
+          _careData = {
+            'careInstructions': care['careInstructions']?.toString() ?? '',
+            'treatment': care['treatment']?.toString() ?? '',
+            'conditionName': care['conditionName']?.toString() ?? '',
+          };
+        });
+        print("✅ Care data: $_careData");
+      } else {
+        print("⚠️ Unexpected data type: ${data.runtimeType}");
+      }
+    }
+  }
+
+  void showNameSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    nameController.clear();
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          color: isDark ? Colors.grey[850] : Colors.white,
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: 20,
+              left: 20,
+              right: 20,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "اسم النبتة",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: nameController,
+                  autofocus: true,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  decoration: InputDecoration(
+                    hintText: "مثال: ورد، صبار، ياسمين",
+                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    filled: true,
+                    fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color.fromARGB(255, 56, 114, 64),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 56, 114, 64),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () async {
+                      if (nameController.text.trim().isNotEmpty) {
+                        Navigator.pop(context);
+                        await _fetchPlantCare(nameController.text.trim());
+                        setState(() {
+                          showTreatmentBox = true;
+                          showSaveButton = true;
+                          showNameButton = false;
+                        });
+                      }
+                    },
+                    child: const Text("تأكيد"),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void showimagepickeroptions() {
@@ -185,7 +334,6 @@ class _BotaipageState extends State<Botaipage> {
       ),
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final sheetColor = isDark ? Colors.grey[850]! : Colors.white;
         return StatefulBuilder(
           builder: (context, setSheetState) {
             return DraggableScrollableSheet(
@@ -195,7 +343,7 @@ class _BotaipageState extends State<Botaipage> {
               maxChildSize: 0.95,
               builder: (context, scrollController) {
                 return Container(
-                  color: sheetColor,
+                  color: isDark ? Colors.grey[850]! : Colors.white,
                   child: Padding(
                     padding: EdgeInsets.only(
                       top: 16,
@@ -264,25 +412,37 @@ class _BotaipageState extends State<Botaipage> {
                                         ),
                                     itemBuilder: (context, index) {
                                       return GestureDetector(
-                                        onTap: () {
+                                        onTap: () async {
                                           if (diseaseResult.isNotEmpty) {
+                                            await ApiService.savePlant(
+                                              name: myplants[index].name,
+                                              disease: diseaseResult,
+                                              treatment: treatmentResult,
+                                            );
                                             setState(() {
+                                              if (_careData.isNotEmpty) {
+                                                myplants[index]
+                                                        .careInstructions =
+                                                    _careData['careInstructions'] ??
+                                                    '';
+                                              }
                                               myplants[index].healthRecords.add(
                                                 HealthRecord(
                                                   disease: diseaseResult,
                                                   treatment: treatmentResult,
                                                   date: DateTime.now(),
-                                                  // healthy = false, غيره = true
                                                   hasDisease:
                                                       diseaseResult !=
                                                       diseaseInfo['healthy']!['disease'],
                                                 ),
                                               );
                                               imagefile = null;
-                                              showSaveButton = false;
+                                              showNameButton = false;
                                               showTreatmentBox = false;
+                                              showSaveButton = false;
                                               diseaseResult = "";
                                               treatmentResult = "";
+                                              _careData = {};
                                             });
                                           }
                                           Navigator.pop(context);
@@ -386,7 +546,6 @@ class _BotaipageState extends State<Botaipage> {
     final hintColor =
         isDark ? Colors.grey[400]! : const Color.fromARGB(255, 78, 139, 88);
     const greenColor = Color.fromARGB(255, 56, 114, 64);
-
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -405,7 +564,6 @@ class _BotaipageState extends State<Botaipage> {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          // ── تعليمات التصوير ──
           if (imagefile == null) ...[
             Padding(
               padding: const EdgeInsets.only(right: 8, top: 8, bottom: 4),
@@ -435,8 +593,6 @@ class _BotaipageState extends State<Botaipage> {
               ),
             ),
           ],
-
-          // ── مربع الصورة ──
           Container(
             decoration: BoxDecoration(
               color: cardColor,
@@ -512,8 +668,6 @@ class _BotaipageState extends State<Botaipage> {
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.02),
-
-                // أزرار الصورة
                 imagefile == null
                     ? ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
@@ -532,7 +686,6 @@ class _BotaipageState extends State<Botaipage> {
                             backgroundColor: greenColor,
                             foregroundColor: Colors.white,
                           ),
-                          // ← هنا بنستدعي الموديل الحقيقي
                           onPressed: isAnalyzing ? null : analyzeImage,
                           icon:
                               isAnalyzing
@@ -554,10 +707,12 @@ class _BotaipageState extends State<Botaipage> {
                           onPressed:
                               () => setState(() {
                                 imagefile = null;
-                                showSaveButton = false;
+                                showNameButton = false;
                                 showTreatmentBox = false;
+                                showSaveButton = false;
                                 diseaseResult = "";
                                 treatmentResult = "";
+                                _careData = {};
                               }),
                           icon: const Icon(
                             Icons.delete_outline,
@@ -573,8 +728,6 @@ class _BotaipageState extends State<Botaipage> {
               ],
             ),
           ),
-
-          // ── نتيجة التحليل ──
           if (diseaseResult.isNotEmpty)
             Container(
               padding: EdgeInsets.all(screenWidth * 0.05),
@@ -614,8 +767,30 @@ class _BotaipageState extends State<Botaipage> {
                 ],
               ),
             ),
-
-          // ── خطة العلاج ──
+          if (showNameButton)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: greenColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: showNameSheet,
+                  icon: const Icon(Icons.edit),
+                  label: const Text('إدخال اسم النبتة'),
+                ),
+              ),
+            ),
           if (showTreatmentBox && treatmentResult.isNotEmpty)
             Container(
               padding: EdgeInsets.all(screenWidth * 0.05),
@@ -657,8 +832,6 @@ class _BotaipageState extends State<Botaipage> {
                 ],
               ),
             ),
-
-          // ── زر الحفظ في حديقتي ──
           if (showSaveButton)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -684,7 +857,6 @@ class _BotaipageState extends State<Botaipage> {
                 ),
               ),
             ),
-
           const SizedBox(height: 20),
         ],
       ),

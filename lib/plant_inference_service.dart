@@ -6,13 +6,8 @@ class PlantInferenceService {
   Interpreter? _validatorInterpreter;
   Interpreter? _diseaseInterpreter;
 
-  final List<String> _diseaseLabels = [
-    'healthy',
-    'fungi',
-    'bacteria',
-    'virus',
-    'pests',
-  ];
+  // ← لو أي مرض فوق 25% نقول مريضة حتى لو healthy أعلى
+  static const double _diseaseThreshold = 0.25;
 
   Future<void> initModels() async {
     try {
@@ -40,19 +35,19 @@ class PlantInferenceService {
     var inputTensor = _preprocessImage(originalImage);
 
     // Stage 1: التأكد إنها ورقة نبات
-    var validatorOutput = List.filled(2, 0.0).reshape([1, 2]);
+    var validatorOutput = List.generate(1, (_) => List.filled(2, 0.0));
     _validatorInterpreter!.run(inputTensor, validatorOutput);
 
-    double leafConfidence = validatorOutput[0][1];
-    if (leafConfidence < 0.80) {
-      return "INVALID_IMAGE: الصورة مش ورقة نبات، ركز على ورقة النبتة وحاول تاني";
-    }
+    double leafConfidence = validatorOutput[0][0];
+    print("🌿 Leaf Confidence: ${(leafConfidence * 100).toStringAsFixed(2)}%");
+
+    if (leafConfidence < 0.80) return "INVALID_IMAGE";
 
     // Stage 2: تحديد المرض
-    var diseaseOutput = List.filled(5, 0.0).reshape([1, 5]);
+    var diseaseOutput = List.generate(1, (_) => List.filled(5, 0.0));
     _diseaseInterpreter!.run(inputTensor, diseaseOutput);
 
-    return _getHighestLabel(diseaseOutput[0]);
+    return _smartDetection(diseaseOutput[0]);
   }
 
   List<List<List<List<double>>>> _preprocessImage(img.Image image) {
@@ -73,16 +68,49 @@ class PlantInferenceService {
     );
   }
 
-  String _getHighestLabel(List<dynamic> output) {
-    double maxConf = -1.0;
-    int maxIdx = 0;
-    for (int i = 0; i < output.length; i++) {
-      if ((output[i] as num).toDouble() > maxConf) {
-        maxConf = (output[i] as num).toDouble();
-        maxIdx = i;
+  String _smartDetection(List<dynamic> output) {
+    double bacteria = (output[0] as num).toDouble();
+    double fungi = (output[1] as num).toDouble();
+    double healthy = (output[2] as num).toDouble();
+    double pests = (output[3] as num).toDouble();
+    double virus = (output[4] as num).toDouble();
+
+    print("🔍 Scores:");
+    print("  bacteria: ${(bacteria * 100).toStringAsFixed(2)}%");
+    print("  fungi:    ${(fungi * 100).toStringAsFixed(2)}%");
+    print("  healthy:  ${(healthy * 100).toStringAsFixed(2)}%");
+    print("  pests:    ${(pests * 100).toStringAsFixed(2)}%");
+    print("  virus:    ${(virus * 100).toStringAsFixed(2)}%");
+
+    // ابحث عن أعلى مرض
+    Map<String, double> diseases = {
+      'bacteria': bacteria,
+      'fungi': fungi,
+      'pests': pests,
+      'virus': virus,
+    };
+
+    String topDisease = 'healthy';
+    double topScore = 0.0;
+    diseases.forEach((label, score) {
+      if (score > topScore) {
+        topScore = score;
+        topDisease = label;
       }
+    });
+
+    print(
+      "🦠 Top disease: $topDisease (${(topScore * 100).toStringAsFixed(2)}%)",
+    );
+
+    // لو أعلى مرض فوق الـ threshold → مريضة
+    if (topScore >= _diseaseThreshold) {
+      print("⚠️ RESULT: DISEASED → $topDisease");
+      return topDisease;
     }
-    return _diseaseLabels[maxIdx];
+
+    print("✅ RESULT: HEALTHY");
+    return 'healthy';
   }
 
   void dispose() {
