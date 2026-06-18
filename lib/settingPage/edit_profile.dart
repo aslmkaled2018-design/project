@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:project/MyGarden.dart';
 import 'package:project/sign_up.dart';
-import 'package:project/login.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -14,7 +13,6 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final ImagePicker picker = ImagePicker();
-
   late TextEditingController nameController;
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -30,9 +28,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       source: ImageSource.gallery,
       imageQuality: 70,
     );
-    if (image != null) {
-      setState(() => userProfileImage = File(image.path));
-    }
+    if (image != null) setState(() => userProfileImage = File(image.path));
   }
 
   @override
@@ -48,9 +44,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          "تعديل الملف الشخصي",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'edit_profile_title'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: greenColor,
@@ -61,8 +60,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-
-            // ── صورة البروفايل ──
             GestureDetector(
               onTap: pickImage,
               child: Stack(
@@ -100,47 +97,38 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 8),
             Text(
-              'اضغط على الصورة لتغييرها',
+              'tap_to_change_photo'.tr(),
               style: TextStyle(color: Colors.grey[500], fontSize: 13),
             ),
-
             const SizedBox(height: 30),
-
             _buildField(
               controller: nameController,
-              label: "الاسم الكامل",
+              label: 'full_name'.tr(),
               icon: Icons.person,
               fieldColor: fieldColor,
               textColor: textColor,
             ),
-
             const SizedBox(height: 20),
-
             _buildField(
               controller: emailController,
-              label: "البريد الإلكتروني",
+              label: 'email'.tr(),
               icon: Icons.email,
               keyboardType: TextInputType.emailAddress,
               fieldColor: fieldColor,
               textColor: textColor,
             ),
-
             const SizedBox(height: 20),
-
             _buildField(
               controller: phoneController,
-              label: "رقم الهاتف",
+              label: 'phone'.tr(),
               icon: Icons.phone,
               keyboardType: TextInputType.phone,
               fieldColor: fieldColor,
               textColor: textColor,
             ),
-
             const SizedBox(height: 40),
-
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -152,9 +140,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                 ),
                 onPressed: () {
-                  if (nameController.text.isNotEmpty) {
+                  if (nameController.text.isNotEmpty)
                     currentUserName = nameController.text;
-                  }
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       backgroundColor: greenColor,
@@ -162,17 +149,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       behavior: SnackBarBehavior.floating,
-                      content: const Row(
+                      content: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.check_circle,
                             color: Colors.white,
                             size: 20,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            "تم حفظ التغييرات بنجاح",
-                            style: TextStyle(color: Colors.white),
+                            'changes_saved'.tr(),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ],
                       ),
@@ -180,9 +167,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   );
                   Navigator.pop(context);
                 },
-                child: const Text(
-                  "حفظ التغييرات",
-                  style: TextStyle(
+                child: Text(
+                  'save_changes'.tr(),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -190,7 +177,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
           ],
         ),
@@ -210,12 +196,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      textDirection: TextDirection.rtl,
+
       style: TextStyle(color: textColor),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[500]),
-        prefixIcon: const Icon(Icons.person, color: greenColor),
+        prefixIcon: Icon(icon, color: greenColor),
         filled: true,
         fillColor: fieldColor,
         border: OutlineInputBorder(

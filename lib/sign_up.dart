@@ -1,12 +1,10 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'services/api_service.dart';
 
 String currentUserName = "";
 File? userProfileImage;
-
-// متغير عالمي بيحفظ اسم المستخدم — بيتحدث من login وregister
 
 class SignUpFields extends StatefulWidget {
   final VoidCallback onBack;
@@ -21,7 +19,6 @@ class _SignUpFieldsState extends State<SignUpFields> {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final emailController = TextEditingController();
-  final phoneController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
   bool isLoading = false;
@@ -33,30 +30,24 @@ class _SignUpFieldsState extends State<SignUpFields> {
 
   Future<void> handleRegister() async {
     if (!formstate.currentState!.validate()) return;
-
     setState(() => isLoading = true);
-
     final result = await ApiService.register(
       firstName: firstNameController.text.trim(),
       lastName: lastNameController.text.trim(),
       email: emailController.text.trim(),
       password: passwordController.text,
-      phone: phoneController.text.trim(),
+      // ← شلنا phone
     );
-
     setState(() => isLoading = false);
-
     if (!mounted) return;
-
     if (result['success']) {
-      // ← بنحفظ الاسم بعد التسجيل
       currentUserName =
           '${firstNameController.text.trim()} ${lastNameController.text.trim()}';
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? 'فشل إنشاء الحساب'),
+          content: Text(result['message'] ?? 'register_failed'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -76,13 +67,11 @@ class _SignUpFieldsState extends State<SignUpFields> {
       child: TextFormField(
         controller: controller,
         validator: (value) {
-          if (value!.isEmpty) return 'الحقل فارغ';
-          if (isEmail && !emailreg.hasMatch(value.trim())) {
-            return 'ادخل بريد إلكتروني صحيح';
-          }
-          if (isConfirmPassword && value != passwordController.text) {
-            return 'كلمة المرور غير متطابقة';
-          }
+          if (value!.isEmpty) return 'field_empty'.tr();
+          if (isEmail && !emailreg.hasMatch(value.trim()))
+            return 'invalid_email_format'.tr();
+          if (isConfirmPassword && value != passwordController.text)
+            return 'passwords_not_match'.tr();
           return null;
         },
         obscureText: isPassword,
@@ -114,40 +103,35 @@ class _SignUpFieldsState extends State<SignUpFields> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(height: 22),
-            const Text(
-              'إنشاء حساب جديد',
-              style: TextStyle(
+            Text(
+              'create_account'.tr(),
+              style: const TextStyle(
                 fontSize: 22,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 20),
-            buildTextField('الاسم الأول', controller: firstNameController),
+            buildTextField('first_name'.tr(), controller: firstNameController),
             const SizedBox(height: 15),
-            buildTextField('الاسم الأخير', controller: lastNameController),
+            buildTextField('last_name'.tr(), controller: lastNameController),
             const SizedBox(height: 15),
             buildTextField(
-              'البريد الإلكتروني',
+              'email_field'.tr(),
               keyboardType: TextInputType.emailAddress,
               isEmail: true,
               controller: emailController,
             ),
             const SizedBox(height: 15),
+            // ← شلنا phone field خالص
             buildTextField(
-              'رقم الهاتف',
-              keyboardType: TextInputType.phone,
-              controller: phoneController,
-            ),
-            const SizedBox(height: 15),
-            buildTextField(
-              'كلمة المرور',
+              'password_field'.tr(),
               isPassword: true,
               controller: passwordController,
             ),
             const SizedBox(height: 15),
             buildTextField(
-              'تأكيد كلمة المرور',
+              'confirm_password'.tr(),
               isPassword: true,
               controller: confirmPasswordController,
               isConfirmPassword: true,
@@ -176,14 +160,14 @@ class _SignUpFieldsState extends State<SignUpFields> {
                           strokeWidth: 2,
                         ),
                       )
-                      : const Text('إنشاء حساب'),
+                      : Text('create_account_btn'.tr()),
             ),
             const SizedBox(height: 10),
             TextButton(
               onPressed: widget.onBack,
-              child: const Text(
-                'رجوع',
-                style: TextStyle(color: Colors.white70),
+              child: Text(
+                'back'.tr(),
+                style: const TextStyle(color: Colors.white70),
               ),
             ),
             const SizedBox(height: 18),

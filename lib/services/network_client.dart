@@ -2,11 +2,8 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 class NetworkClient {
-  static const String baseUrl = 'http://fayez24-001-site1.ntempurl.com';
-
-  // ── Basic Auth credentials (server-level) ──
-  static const String _basicUser = 'fayez24-001';
-  static const String _basicPass = '[Fayez2004..]';
+  static const String baseUrl =
+      'https://easygoing-quietude-production-9004.up.railway.app'; // ← اللينك الجديد
 
   static Dio? _dio;
 
@@ -24,8 +21,7 @@ class NetworkClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          // Basic Auth header على كل request أوتوماتيك
-          'Authorization': _buildBasicAuth(),
+          // ← شلنا الـ Basic Auth لأن السيرفر الجديد مش محتاجه
         },
       ),
     );
@@ -35,31 +31,20 @@ class NetworkClient {
 
     return dio;
   }
-
-  static String _buildBasicAuth() {
-    final credentials = base64Encode(utf8.encode('$_basicUser:$_basicPass'));
-    return 'Basic $credentials';
-  }
 }
 
 // ── Interceptor بيضيف الـ Bearer Token لو موجود ──
 class _AuthInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // Basic Auth اتضاف في الـ default headers
-    // لو عندنا Bearer Token نضيفه جنب البيزك
-    // (هيتضاف من الـ ApiService لو محتاج)
     handler.next(options);
   }
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // لو السيرفر رجع HTML بدل JSON
     if (err.response?.data is String &&
         (err.response!.data as String).contains('<html')) {
-      err = err.copyWith(
-        message: 'السيرفر رجع HTML — تأكد من الـ Basic Auth credentials',
-      );
+      err = err.copyWith(message: 'السيرفر رجع HTML — تأكد من الـ endpoint');
     }
     handler.next(err);
   }

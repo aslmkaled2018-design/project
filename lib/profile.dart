@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:project/sign_up.dart';
 import 'settingPage/settingpage.dart';
-import 'settingPage/edit_profile.dart';
 import 'MyGarden.dart';
 import 'login.dart';
 import 'scan_history_page.dart';
@@ -16,18 +16,12 @@ class Profilepage extends StatefulWidget {
 }
 
 class _ProfilepageState extends State<Profilepage> {
-  // الفحوصات = كل التحليلات
-  int getTotalScans() {
-    return myplants.fold(0, (sum, p) => sum + p.healthRecords.length);
-  }
-
-  // الأمراض = اللي hasDisease = true بس
-  int getTotalDiseases() {
-    return myplants.fold(
-      0,
-      (sum, p) => sum + p.healthRecords.where((r) => r.hasDisease).length,
-    );
-  }
+  int getTotalScans() =>
+      myplants.fold(0, (sum, p) => sum + p.healthRecords.length);
+  int getTotalDiseases() => myplants.fold(
+    0,
+    (sum, p) => sum + p.healthRecords.where((r) => r.hasDisease).length,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +36,8 @@ class _ProfilepageState extends State<Profilepage> {
         isDark ? Colors.grey[800]! : const Color.fromARGB(255, 219, 243, 221);
     const greenColor = Color.fromARGB(255, 56, 114, 64);
 
-    final totalScans = getTotalScans(); // ← الفحوصات
-    final totalDiseases = getTotalDiseases(); // ← الأمراض
+    final totalScans = getTotalScans();
+    final totalDiseases = getTotalDiseases();
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -53,9 +47,12 @@ class _ProfilepageState extends State<Profilepage> {
         backgroundColor: greenColor,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          "البروفايل",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'my_profile'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: ListView(
@@ -111,7 +108,7 @@ class _ProfilepageState extends State<Profilepage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'مرحبا بك في احصائياتك',
+                          'your_stats'.tr(),
                           style: TextStyle(
                             color: isDark ? Colors.grey[400] : Colors.grey[600],
                             fontSize: 13,
@@ -127,19 +124,19 @@ class _ProfilepageState extends State<Profilepage> {
                   children: [
                     _statCard(
                       Icons.eco_outlined,
-                      'نباتاتي',
+                      'my_plants'.tr(),
                       myplants.length.toString(),
                     ),
                     _divider(isDark),
                     _statCard(
                       Icons.coronavirus_outlined,
-                      'الأمراض',
+                      'diseases'.tr(),
                       totalDiseases.toString(),
                     ),
                     _divider(isDark),
                     _statCard(
                       Icons.qr_code_scanner,
-                      'الفحوصات',
+                      'scans'.tr(),
                       totalScans.toString(),
                     ),
                   ],
@@ -149,7 +146,7 @@ class _ProfilepageState extends State<Profilepage> {
           ),
           const SizedBox(height: 20),
           _button(
-            "سجل الفحوصات",
+            'scan_history'.tr(),
             Icons.history,
             cardColor,
             iconBg,
@@ -163,7 +160,7 @@ class _ProfilepageState extends State<Profilepage> {
             },
           ),
           _button(
-            "النصائح المحفوظة",
+            'saved_tips'.tr(),
             Icons.star_border,
             cardColor,
             iconBg,
@@ -177,7 +174,7 @@ class _ProfilepageState extends State<Profilepage> {
             },
           ),
           _button(
-            "الإعدادات",
+            'settings'.tr(),
             Icons.settings,
             cardColor,
             iconBg,
@@ -191,7 +188,7 @@ class _ProfilepageState extends State<Profilepage> {
             },
           ),
           _button(
-            "تسجيل الخروج",
+            'logout'.tr(),
             Icons.logout,
             cardColor,
             iconBg,
@@ -202,15 +199,15 @@ class _ProfilepageState extends State<Profilepage> {
                 context: context,
                 builder:
                     (context) => AlertDialog(
-                      title: const Text("تسجيل الخروج"),
-                      content: const Text("هل تريد تسجيل الخروج؟"),
+                      title: Text('logout'.tr()),
+                      content: Text('logout_confirm'.tr()),
                       actions: [
                         TextButton(
-                          child: const Text("لا"),
+                          child: Text('no'.tr()),
                           onPressed: () => Navigator.pop(context),
                         ),
                         TextButton(
-                          child: const Text("نعم"),
+                          child: Text('yes'.tr()),
                           onPressed: () {
                             Navigator.pushAndRemoveUntil(
                               context,

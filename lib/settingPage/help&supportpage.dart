@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class HelpPage extends StatelessWidget {
   const HelpPage({super.key});
@@ -17,9 +18,12 @@ class HelpPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          "المساعدة والدعم",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'help_support'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: greenColor,
@@ -34,12 +38,12 @@ class HelpPage extends StatelessWidget {
             shadowColor,
             greenColor,
             textColor,
-            title: "الأسئلة الشائعة",
+            title: 'faq'.tr(),
             icon: Icons.help_outline,
             items: [
-              "كيف أقوم بفحص النبتة؟",
-              "لماذا فشل تحليل النبتة؟",
-              "كيف يعمل الذكاء الاصطناعي في التطبيق؟",
+              'كيف أقوم بفحص النبتة؟',
+              'لماذا فشل تحليل النبتة؟',
+              'كيف يعمل الذكاء الاصطناعي في التطبيق؟',
             ],
           ),
           const SizedBox(height: 12),
@@ -48,11 +52,11 @@ class HelpPage extends StatelessWidget {
             shadowColor,
             greenColor,
             textColor,
-            title: "تواصل معنا",
+            title: 'contact_us'.tr(),
             icon: Icons.contact_support_outlined,
             items: [
-              "البريد الإلكتروني: support@flora.com",
-              "الهاتف: +1 202 555 0182",
+              'البريد الإلكتروني: aslmkaled@gmail.com',
+              'الهاتف: 01014056925',
             ],
           ),
         ],

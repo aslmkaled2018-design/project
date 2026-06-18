@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'MyGarden.dart';
 import 'Care.dart';
 import 'Health_record.dart';
 
 class PlantDetailsPage extends StatefulWidget {
   final plant Plant;
-
   const PlantDetailsPage({super.key, required this.Plant});
 
   @override
@@ -14,22 +14,6 @@ class PlantDetailsPage extends StatefulWidget {
 }
 
 class _PlantDetailsPageState extends State<PlantDetailsPage> {
-  late TextEditingController notesController;
-  late TextEditingController wateringController;
-  late TextEditingController locationController;
-
-  @override
-  void initState() {
-    super.initState();
-    notesController = TextEditingController(text: widget.Plant.notes ?? "");
-    wateringController = TextEditingController(
-      text: widget.Plant.wateringSchedule ?? "",
-    );
-    locationController = TextEditingController(
-      text: widget.Plant.location ?? "",
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -37,17 +21,17 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
       child: Scaffold(
         appBar: AppBar(
           foregroundColor: Colors.white,
-          title: const Text(
-            "ملف النبات",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          title: Text(
+            'plant_file'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
-          backgroundColor: Color.fromARGB(255, 56, 114, 64),
+          backgroundColor: const Color.fromARGB(255, 56, 114, 64),
         ),
         body: Column(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(5),
                 topRight: Radius.circular(5),
                 bottomLeft: Radius.circular(20),
@@ -67,8 +51,8 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
             ),
             const SizedBox(height: 10),
             Container(
-              margin: EdgeInsets.all(13),
-              padding: EdgeInsets.all(3),
+              margin: const EdgeInsets.all(13),
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(10),
@@ -76,7 +60,7 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
               child: TabBar(
                 dividerColor: Colors.grey.shade300,
                 indicatorSize: TabBarIndicatorSize.tab,
-                labelStyle: TextStyle(
+                labelStyle: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -87,13 +71,17 @@ class _PlantDetailsPageState extends State<PlantDetailsPage> {
                 ),
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.black,
-                tabs: [Tab(text: "الرعاية"), Tab(text: "سجل الصحة")],
+                tabs: [Tab(text: 'care'.tr()), Tab(text: 'health_record'.tr())],
               ),
             ),
             Expanded(
               child: TabBarView(
                 children: [
-                  InfoSection(plantData: widget.Plant),
+                  // ← key بيجبر الـ widget يعمل rebuild لما careInstructions تتغير
+                  InfoSection(
+                    key: ValueKey(widget.Plant.careInstructions),
+                    plantData: widget.Plant,
+                  ),
                   HealthRecordSection(Plant: widget.Plant),
                 ],
               ),

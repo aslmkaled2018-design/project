@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../MyGarden.dart';
 
 class ClearAllHistory extends StatefulWidget {
@@ -19,7 +20,6 @@ class _ClearAllHistoryState extends State<ClearAllHistory> {
         isDark ? Colors.black : const Color.fromARGB(255, 149, 234, 179);
     final textColor = isDark ? Colors.white : Colors.black;
     const greenColor = Color.fromARGB(255, 56, 114, 64);
-
     final totalScans = myplants.fold(
       0,
       (sum, p) => sum + p.healthRecords.length,
@@ -28,9 +28,12 @@ class _ClearAllHistoryState extends State<ClearAllHistory> {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          "مسح جميع البيانات",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'clear_all_title'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: greenColor,
@@ -58,7 +61,7 @@ class _ClearAllHistoryState extends State<ClearAllHistory> {
                 const Icon(Icons.delete_forever, size: 60, color: Colors.red),
                 const SizedBox(height: 16),
                 Text(
-                  "مسح جميع البيانات",
+                  'clear_all_title'.tr(),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -67,7 +70,9 @@ class _ClearAllHistoryState extends State<ClearAllHistory> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "لديك $totalScans فحص مسجل. هل تريد مسحهم جميعاً؟",
+                  'clear_scans_confirm'.tr(
+                    namedArgs: {'count': totalScans.toString()},
+                  ),
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey[500], fontSize: 14),
                 ),
@@ -90,17 +95,17 @@ class _ClearAllHistoryState extends State<ClearAllHistory> {
                             (context) => AlertDialog(
                               backgroundColor: cardColor,
                               title: Text(
-                                "تأكيد المسح",
+                                'confirm_delete'.tr(),
                                 style: TextStyle(color: textColor),
                               ),
                               content: Text(
-                                "هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.",
+                                'confirm_delete_msg'.tr(),
                                 style: TextStyle(color: Colors.grey[500]),
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: const Text("إلغاء"),
+                                  child: Text('cancel'.tr()),
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
@@ -108,9 +113,7 @@ class _ClearAllHistoryState extends State<ClearAllHistory> {
                                     foregroundColor: Colors.white,
                                   ),
                                   onPressed: () {
-                                    setState(() {
-                                      myplants.clear();
-                                    });
+                                    setState(() => myplants.clear());
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -121,17 +124,17 @@ class _ClearAllHistoryState extends State<ClearAllHistory> {
                                             10,
                                           ),
                                         ),
-                                        content: const Row(
+                                        content: Row(
                                           children: [
-                                            Icon(
+                                            const Icon(
                                               Icons.check_circle,
                                               color: Colors.white,
                                               size: 20,
                                             ),
-                                            SizedBox(width: 8),
+                                            const SizedBox(width: 8),
                                             Text(
-                                              "تم مسح البيانات بنجاح",
-                                              style: TextStyle(
+                                              'all_cleared'.tr(),
+                                              style: const TextStyle(
                                                 color: Colors.white,
                                               ),
                                             ),
@@ -140,15 +143,15 @@ class _ClearAllHistoryState extends State<ClearAllHistory> {
                                       ),
                                     );
                                   },
-                                  child: const Text("مسح"),
+                                  child: Text('delete'.tr()),
                                 ),
                               ],
                             ),
                       );
                     },
-                    child: const Text(
-                      "مسح جميع البيانات",
-                      style: TextStyle(
+                    child: Text(
+                      'clear_all_btn'.tr(),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),

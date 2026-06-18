@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class WelcomePageTemplate extends StatefulWidget {
   final String image, title, desc;
@@ -17,7 +18,6 @@ class WelcomePageTemplate extends StatefulWidget {
     required this.iconColor,
     required this.overlayOpacity,
     required this.onNext,
-
     this.isLastPage = false,
   });
 
@@ -47,7 +47,6 @@ class _WelcomePageTemplateState extends State<WelcomePageTemplate> {
               const Spacer(),
               Icon(widget.icon, color: widget.iconColor, size: 90),
               const SizedBox(height: 25),
-
               Text(
                 widget.title,
                 textAlign: TextAlign.center,
@@ -57,7 +56,6 @@ class _WelcomePageTemplateState extends State<WelcomePageTemplate> {
                 ),
               ),
               const SizedBox(height: 16),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
@@ -69,9 +67,7 @@ class _WelcomePageTemplateState extends State<WelcomePageTemplate> {
                   ),
                 ),
               ),
-
               const Spacer(),
-
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -84,13 +80,11 @@ class _WelcomePageTemplateState extends State<WelcomePageTemplate> {
                       onPressed:
                           widget.isLastPage
                               ? null
-                              : () {
-                                Navigator.of(
-                                  context,
-                                ).pushReplacementNamed('/login');
-                              },
+                              : () => Navigator.of(
+                                context,
+                              ).pushReplacementNamed('/login'),
                       child: Text(
-                        widget.isLastPage ? '' : 'تخطي',
+                        widget.isLastPage ? '' : 'skip'.tr(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -98,15 +92,12 @@ class _WelcomePageTemplateState extends State<WelcomePageTemplate> {
                         ),
                       ),
                     ),
-
                     ElevatedButton(
                       onPressed:
                           widget.isLastPage
-                              ? () {
-                                Navigator.of(
-                                  context,
-                                ).pushReplacementNamed('/login');
-                              }
+                              ? () => Navigator.of(
+                                context,
+                              ).pushReplacementNamed('/login')
                               : widget.onNext,
                       style: ElevatedButton.styleFrom(
                         shape: RoundedRectangleBorder(
@@ -122,7 +113,7 @@ class _WelcomePageTemplateState extends State<WelcomePageTemplate> {
                         ),
                       ),
                       child: Text(
-                        widget.isLastPage ? 'ابدأ الآن' : 'التالي',
+                        widget.isLastPage ? 'start_now'.tr() : 'next'.tr(),
                         style: const TextStyle(
                           fontSize: 13,
                           color: Colors.white,

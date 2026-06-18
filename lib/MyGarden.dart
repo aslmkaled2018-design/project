@@ -1,6 +1,6 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
 import 'PlantDetailsPage.dart';
 
@@ -53,9 +53,9 @@ class _GardenpageState extends State<Gardenpage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              const Text(
-                "إضافة نبتة جديدة",
-                style: TextStyle(
+              Text(
+                'add_new_plant'.tr(),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Color.fromARGB(255, 56, 114, 64),
@@ -75,7 +75,7 @@ class _GardenpageState extends State<Gardenpage> {
               TextFormField(
                 controller: nameController,
                 decoration: InputDecoration(
-                  labelText: "اسم النبتة",
+                  labelText: 'plant_name'.tr(),
                   filled: true,
                   fillColor: isDark ? Colors.grey[800] : Colors.white,
                   border: OutlineInputBorder(
@@ -115,8 +115,9 @@ class _GardenpageState extends State<Gardenpage> {
                         Navigator.pop(context);
                       }
                     },
-                    child: const Text("إضافة"),
+                    child: Text('add'.tr()),
                   ),
+
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -124,7 +125,7 @@ class _GardenpageState extends State<Gardenpage> {
                       ),
                     ),
                     onPressed: () => Navigator.pop(context),
-                    child: const Text("إلغاء"),
+                    child: Text('cancel'.tr()),
                   ),
                 ],
               ),
@@ -152,9 +153,12 @@ class _GardenpageState extends State<Gardenpage> {
         backgroundColor: greenColor,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'حديقتي',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'my_garden'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Padding(
@@ -201,22 +205,25 @@ class _GardenpageState extends State<Gardenpage> {
                     ),
                   ),
               onLongPress: () {
-                // ← ضغط طويل يفتح dialog للحذف
                 showDialog(
                   context: context,
                   builder:
                       (context) => AlertDialog(
-                        title: const Text("حذف النبتة"),
-                        content: Text("هل تريد حذف ${myplants[index].name}؟"),
+                        title: Text('delete_plant'.tr()),
+                        content: Text(
+                          'delete_plant_confirm'.tr(
+                            namedArgs: {'name': myplants[index].name},
+                          ),
+                        ),
                         actions: [
                           TextButton(
-                            child: const Text("لا"),
+                            child: Text('no'.tr()),
                             onPressed: () => Navigator.pop(context),
                           ),
                           TextButton(
-                            child: const Text(
-                              "نعم",
-                              style: TextStyle(color: Colors.red),
+                            child: Text(
+                              'yes'.tr(),
+                              style: const TextStyle(color: Colors.red),
                             ),
                             onPressed: () {
                               setState(() => myplants.removeAt(index));
@@ -263,6 +270,8 @@ class _GardenpageState extends State<Gardenpage> {
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -314,16 +323,17 @@ class DottedBorderPainter extends CustomPainter {
 class plant {
   final String image;
   final String name;
-  String? notes, wateringSchedule, location;
+  String? notes,
+      wateringSchedule,
+      location,
+      careInstructions,
+      watering,
+      light,
+      fertilizing,
+      soil,
+      humidity;
   List<HealthRecord> healthRecords;
 
-  String? careInstructions;
-
-  String? watering;
-  String? light;
-  String? fertilizing;
-  String? soil;
-  String? humidity;
   plant({
     required this.image,
     required this.name,
@@ -335,7 +345,6 @@ class plant {
     this.fertilizing,
     this.soil,
     this.humidity,
-
     List<HealthRecord>? healthRecords,
   }) : healthRecords = healthRecords ?? [];
 }
@@ -344,10 +353,37 @@ class HealthRecord {
   final String disease, treatment;
   final DateTime date;
   final bool hasDisease;
+  bool isRecovered;
+  DateTime? doneTodayAt;
   HealthRecord({
     required this.disease,
     required this.treatment,
     required this.date,
     required this.hasDisease,
+    this.isRecovered = false,
+    this.doneTodayAt,
   });
+
+  // ← خطوة النهارده بس
+  String get todayStep {
+    if (treatment.isEmpty) return treatment;
+    
+    // قسّم على . 
+    final steps = treatment
+        .split('.')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    
+    if (steps.isEmpty) return treatment;
+    if (steps.length == 1) return treatment;
+    
+    // ← كل يوم خطوة مختلفة (تتغير عند منتصف الليل 12:00 AM)
+    final todayMidnight = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final dateMidnight = DateTime(date.year, date.month, date.day);
+    final daysSince = todayMidnight.difference(dateMidnight).inDays;
+    
+    final stepIndex = daysSince % steps.length;
+    return steps[stepIndex];
+  }
 }

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:project/welcome_screen.dart';
 import 'sign_in.dart';
 import 'sign_up.dart';
@@ -14,7 +15,7 @@ class LoginBox extends StatefulWidget {
 class _LoginBoxState extends State<LoginBox> {
   bool showSignIn = false;
   bool showSignUp = false;
-  @override
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,7 +30,6 @@ class _LoginBoxState extends State<LoginBox> {
               ),
             ),
           ),
-
           Center(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(15),
@@ -51,7 +51,6 @@ class _LoginBoxState extends State<LoginBox> {
                     ).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(15),
                   ),
-
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 350),
                     transitionBuilder: (
@@ -65,7 +64,6 @@ class _LoginBoxState extends State<LoginBox> {
                                 : const Offset(-1, 0),
                         end: Offset.zero,
                       ).animate(animation);
-
                       return SlideTransition(
                         position: offsetAnimation,
                         child: child,
@@ -74,19 +72,11 @@ class _LoginBoxState extends State<LoginBox> {
                     child:
                         showSignIn
                             ? Fields(
-                              onBack: () {
-                                setState(() {
-                                  showSignIn = false;
-                                });
-                              },
+                              onBack: () => setState(() => showSignIn = false),
                             )
                             : showSignUp
                             ? SignUpFields(
-                              onBack: () {
-                                setState(() {
-                                  showSignUp = false;
-                                });
-                              },
+                              onBack: () => setState(() => showSignUp = false),
                             )
                             : buildMainButtons(),
                   ),
@@ -107,9 +97,9 @@ class _LoginBoxState extends State<LoginBox> {
           const SizedBox(height: 15),
           Container(
             padding: const EdgeInsets.only(left: 170, top: 40),
-            child: const Text(
-              'مرحباً!',
-              style: TextStyle(
+            child: Text(
+              'hello'.tr(),
+              style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 25,
                 color: Color.fromARGB(255, 201, 201, 201),
@@ -118,9 +108,9 @@ class _LoginBoxState extends State<LoginBox> {
           ),
           Container(
             padding: const EdgeInsets.only(left: 87),
-            child: const Text(
-              'تعرف علي اي صورة بسرعة',
-              style: TextStyle(
+            child: Text(
+              'identify_fast'.tr(),
+              style: const TextStyle(
                 color: Color.fromARGB(255, 214, 214, 214),
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -133,23 +123,18 @@ class _LoginBoxState extends State<LoginBox> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 100,
-                vertical: 10,
-              ),
+              fixedSize: const Size(230, 42),
               backgroundColor: const Color.fromARGB(255, 18, 112, 65),
               foregroundColor: Colors.white,
             ),
-            onPressed: () {
-              setState(() {
-                showSignIn = true;
-                showSignUp = false;
-              });
-            },
-            child: const Text('Sign In'),
+            onPressed:
+                () => setState(() {
+                  showSignIn = true;
+                  showSignUp = false;
+                }),
+            child: Text('sign_in'.tr()),
           ),
           const SizedBox(height: 10),
-
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               side: const BorderSide(color: Colors.white, width: 0.5),
@@ -158,26 +143,26 @@ class _LoginBoxState extends State<LoginBox> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 98, vertical: 9),
+              fixedSize: const Size(230, 42),
             ),
-            onPressed: () {
-              setState(() {
-                showSignUp = true;
-                showSignIn = false;
-              });
-            },
-            child: const Text('Sign Up'),
+            onPressed:
+                () => setState(() {
+                  showSignUp = true;
+                  showSignIn = false;
+                }),
+            child: Text('sign_up'.tr()),
           ),
           const SizedBox(height: 10),
-
           TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => WelcomeScreens()),
-              );
-            },
-            child: const Text('رجوع', style: TextStyle(color: Colors.white70)),
+            onPressed:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => WelcomeScreens()),
+                ),
+            child: Text(
+              'back'.tr(),
+              style: const TextStyle(color: Colors.white70),
+            ),
           ),
         ],
       ),

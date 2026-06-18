@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:project/sign_up.dart';
 import 'MyGarden.dart';
 import 'PlantDetailsPage.dart';
@@ -12,24 +13,29 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  Set<int> doneTasks = {};
-
   List<Map<String, dynamic>> getTodayTasks() {
     List<Map<String, dynamic>> tasks = [];
     final today = DateTime.now();
     for (final p in myplants) {
       for (final record in p.healthRecords) {
-        if (record.date.year == today.year &&
-            record.date.month == today.month &&
-            record.date.day == today.day) {
-          tasks.add({
-            'plantName': p.name,
-            'plantImage': p.image,
-            'disease': record.disease,
-            'treatment': record.treatment,
-            'plant': p,
-          });
-        }
+        if (!record.hasDisease) continue;
+        if (record.isRecovered) continue;
+
+        final doneToday = record.doneTodayAt;
+        if (doneToday != null &&
+            doneToday.year == today.year &&
+            doneToday.month == today.month &&
+            doneToday.day == today.day)
+          continue;
+
+        tasks.add({
+          'plantName': p.name,
+          'plantImage': p.image,
+          'disease': record.disease,
+          'treatment': record.todayStep, // ← بدل record.treatment
+          'plant': p,
+          'record': record,
+        });
       }
     }
     return tasks;
@@ -57,9 +63,12 @@ class _HomepageState extends State<Homepage> {
         backgroundColor: greenColor,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          'الرئيسية',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'home'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -84,8 +93,8 @@ class _HomepageState extends State<Homepage> {
               ),
               child: ListTile(
                 title: Text(
-                  'مرحبا $currentUserName',
-                  style: TextStyle(
+                  '${'welcome'.tr()} $currentUserName',
+                  style: const TextStyle(
                     fontSize: 26,
                     color: greenColor,
                     fontWeight: FontWeight.bold,
@@ -93,25 +102,23 @@ class _HomepageState extends State<Homepage> {
                 ),
                 subtitle: Text(
                   tasks.isEmpty
-                      ? 'مفيش مهام النهارده'
-                      : 'لديك ${tasks.length} مهمة للعناية بنباتاتك اليوم',
+                      ? 'no_tasks_today'.tr()
+                      : 'tasks_today'.tr(
+                        namedArgs: {'count': tasks.length.toString()},
+                      ),
                   style: TextStyle(
                     color: isDark ? Colors.grey[400] : Colors.grey[700],
                   ),
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-            _sectionTitle("مهام اليوم", textColor),
-
-            // الجزء المهم فقط اللي اتعدل 👇
-            // الجزء المهم فقط اللي اتعدل 👇
+            _sectionTitle('today_tasks'.tr(), textColor),
             tasks.isEmpty
                 ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Text(
-                    'مفيش مهام النهارده، نباتاتك بخير!',
+                    'no_tasks_plants_ok'.tr(),
                     style: TextStyle(color: Colors.grey[500], fontSize: 14),
                   ),
                 )
@@ -120,12 +127,8 @@ class _HomepageState extends State<Homepage> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: tasks.length,
                   itemBuilder: (context, index) {
-                    // 👇 السطر ده بيخفي التاسك لو اتعمل Done
-                    if (doneTasks.contains(index)) {
-                      return const SizedBox();
-                    }
-
                     final task = tasks[index];
+                    final record = task['record'] as HealthRecord;
 
                     return Container(
                       margin: const EdgeInsets.symmetric(
@@ -143,113 +146,179 @@ class _HomepageState extends State<Homepage> {
                           ),
                         ],
                       ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.file(
-                            File(task['plantImage']),
-                            width: 55,
-                            height: 55,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        title: Text(
-                          task['plantName'],
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
-                        subtitle: Column(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 4),
+                            // ── اسم النبتة والصورة ──
                             Row(
                               children: [
-                                const Icon(
-                                  Icons.coronavirus_outlined,
-                                  size: 14,
-                                  color: Colors.red,
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.file(
+                                    File(task['plantImage']),
+                                    width: 55,
+                                    height: 55,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: 12),
                                 Expanded(
-                                  child: Text(
-                                    task['disease'],
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.red,
-                                    ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        task['plantName'],
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: textColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.coronavirus_outlined,
+                                            size: 13,
+                                            color: Colors.red,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Text(
+                                              task['disease'],
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.healing,
-                                  size: 14,
-                                  color: greenColor,
-                                ),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    task['treatment']
-                                        .toString()
-                                        .split('\n')
-                                        .first,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: greenColor,
+                            const SizedBox(height: 10),
+                            // ── العلاج كامل ──
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color:
+                                    isDark
+                                        ? Colors.grey[800]
+                                        : const Color.fromARGB(
+                                          255,
+                                          236,
+                                          255,
+                                          237,
+                                        ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.healing,
+                                    size: 16,
+                                    color: greenColor,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      task['treatment'].toString(),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color:
+                                            isDark
+                                                ? Colors.white
+                                                : Colors.black87,
+                                        height: 1.6,
+                                      ),
+                                      textAlign: TextAlign.right,
                                     ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            // ── الأزرار ──
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                // ← زر تعافت نهائياً
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.green,
+                                    side: const BorderSide(color: Colors.green),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      record.isRecovered = true;
+                                    });
+                                  },
+                                  icon: const Icon(
+                                    Icons.check_circle,
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    'RECOVER'.tr(),
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                // ← زر تم النهارده
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: greenColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      record.doneTodayAt = DateTime.now();
+                                    });
+                                  },
+                                  icon: const Icon(Icons.done, size: 16),
+                                  label: Text(
+                                    'done'.tr(),
+                                    style: const TextStyle(fontSize: 12),
                                   ),
                                 ),
                               ],
                             ),
                           ],
                         ),
-
-                        // 👇 الزرار اتعدل
-                        trailing: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: greenColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              doneTasks.add(index); // يخفي التاسك
-                            });
-                          },
-                          child: const Text(
-                            'تم',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                        ),
                       ),
                     );
                   },
                 ),
-
             const SizedBox(height: 15),
-            _sectionTitle("حديقتي", textColor),
-
+            _sectionTitle('my_garden'.tr(), textColor),
             myplants.isEmpty
                 ? Padding(
                   padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Text(
-                    'حديقتك فارغة لسه!',
+                    'garden_empty'.tr(),
                     style: TextStyle(color: Colors.grey[500], fontSize: 14),
                   ),
                 )

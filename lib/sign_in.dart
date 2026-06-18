@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'services/api_service.dart';
 import 'sign_up.dart';
 
@@ -23,29 +24,20 @@ class _FieldsState extends State<Fields> {
 
   Future<void> handleLogin() async {
     if (!formstate.currentState!.validate()) return;
-
     setState(() => isLoading = true);
-
     final result = await ApiService.login(
       emailController.text.trim(),
       passwordController.text,
     );
-
-    print("🔍 Full result: $result");
-
     setState(() => isLoading = false);
-
     if (!mounted) return;
-
     if (result['success']) {
-      // ← الاسم جوه user object
       currentUserName = result['data']['user']?['fullName'] ?? '';
-      print("👤 fullName: $currentUserName");
       Navigator.of(context).pushReplacementNamed('/home');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result['message'] ?? 'فشل تسجيل الدخول'),
+          content: Text(result['message'] ?? 'login_failed'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -60,9 +52,9 @@ class _FieldsState extends State<Fields> {
         key: const ValueKey('signin'),
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'تسجيل الدخول',
-            style: TextStyle(
+          Text(
+            'sign_in'.tr(),
+            style: const TextStyle(
               fontSize: 24,
               color: Colors.white,
               fontWeight: FontWeight.w900,
@@ -74,21 +66,20 @@ class _FieldsState extends State<Fields> {
             child: TextFormField(
               controller: emailController,
               validator: (value) {
-                if (value!.isEmpty) return 'الحقل فارغ';
-                if (!emailReg.hasMatch(value.trim())) {
-                  return 'بريد إلكتروني غير صحيح';
-                }
+                if (value!.isEmpty) return 'field_empty'.tr();
+                if (!emailReg.hasMatch(value.trim()))
+                  return 'invalid_email'.tr();
                 return null;
               },
-              decoration: const InputDecoration(
-                labelText: 'البريد الإلكتروني',
-                labelStyle: TextStyle(
+              decoration: InputDecoration(
+                labelText: 'email_field'.tr(),
+                labelStyle: const TextStyle(
                   color: Color.fromARGB(255, 185, 185, 185),
                 ),
-                enabledBorder: UnderlineInputBorder(
+                enabledBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white70),
                 ),
-                focusedBorder: UnderlineInputBorder(
+                focusedBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
               ),
@@ -100,20 +91,17 @@ class _FieldsState extends State<Fields> {
             width: 220,
             child: TextFormField(
               controller: passwordController,
-              validator: (value) {
-                if (value!.isEmpty) return 'الحقل فارغ';
-                return null;
-              },
+              validator: (value) => value!.isEmpty ? 'field_empty'.tr() : null,
               obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'كلمة المرور',
-                labelStyle: TextStyle(
+              decoration: InputDecoration(
+                labelText: 'password_field'.tr(),
+                labelStyle: const TextStyle(
                   color: Color.fromARGB(255, 185, 185, 185),
                 ),
-                enabledBorder: UnderlineInputBorder(
+                enabledBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white70),
                 ),
-                focusedBorder: UnderlineInputBorder(
+                focusedBorder: const UnderlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
               ),
@@ -141,12 +129,15 @@ class _FieldsState extends State<Fields> {
                         strokeWidth: 2,
                       ),
                     )
-                    : const Text('تسجيل دخول'),
+                    : Text('login_btn'.tr()),
           ),
           const SizedBox(height: 10),
           TextButton(
             onPressed: widget.onBack,
-            child: const Text('رجوع', style: TextStyle(color: Colors.white70)),
+            child: Text(
+              'back'.tr(),
+              style: const TextStyle(color: Colors.white70),
+            ),
           ),
         ],
       ),

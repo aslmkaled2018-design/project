@@ -1,4 +1,8 @@
+// ============================================================
+// welcome_screen.dart
+// ============================================================
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'welcomepagetemplate.dart';
 
 class WelcomeScreens extends StatefulWidget {
@@ -20,54 +24,46 @@ class _WelcomeScreensState extends State<WelcomeScreens> {
         children: [
           PageView(
             controller: controller,
-            onPageChanged: (val) {
-              setState(() {
-                nextPage = val;
-              });
-            },
+            onPageChanged: (val) => setState(() => nextPage = val),
             children: [
               WelcomePageTemplate(
                 image: 'images/plan1.png',
                 icon: Icons.camera_alt_outlined,
                 iconColor: const Color.fromARGB(255, 217, 255, 224),
-                title: 'تعرف على أي نبتة بصورة واحدة',
-                desc: 'التقط صورة لأي نبتة واحصل على معلومات شاملة عنها فوراً',
+                title: 'welcome_title_1'.tr(),
+                desc: 'welcome_desc_1'.tr(),
                 overlayOpacity: 0.7,
-                onNext: () {
-                  controller.nextPage(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                  );
-                },
+                onNext:
+                    () => controller.nextPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    ),
               ),
               WelcomePageTemplate(
                 image: 'images/plan2.jpg',
                 icon: Icons.eco_outlined,
                 iconColor: const Color.fromARGB(255, 232, 255, 199),
-                title: 'شخص مشاكل نبتاتك واحصل على علاج فوري',
-                desc: 'خبير AI متاح 24/7 لمساعدتك في حل مشاكل نباتاتك',
+                title: 'welcome_title_2'.tr(),
+                desc: 'welcome_desc_2'.tr(),
                 overlayOpacity: 0.9,
-
-                onNext: () {
-                  controller.nextPage(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                  );
-                },
+                onNext:
+                    () => controller.nextPage(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    ),
               ),
               WelcomePageTemplate(
                 image: 'images/plan3.jpg',
                 icon: Icons.date_range_outlined,
                 iconColor: const Color.fromARGB(255, 255, 252, 180),
-                title: 'لن تنسى سقي نباتاتك بعد اليوم',
-                desc: 'تذكيرات ذكية ومخصصة لكل نبتة حسب احتياجاتها',
+                title: 'welcome_title_3'.tr(),
+                desc: 'welcome_desc_3'.tr(),
                 overlayOpacity: 0.7,
                 isLastPage: true,
                 onNext: () {},
               ),
             ],
           ),
-
           Positioned(
             bottom: 15,
             child: Row(

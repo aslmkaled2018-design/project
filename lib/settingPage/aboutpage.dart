@@ -1,4 +1,6 @@
+// aboutpage.dart
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -17,9 +19,12 @@ class AboutPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          "عن التطبيق",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'about_app'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: greenColor,
@@ -63,7 +68,7 @@ class AboutPage extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           "Flora AI",
                           style: TextStyle(
                             fontSize: 22,
@@ -72,7 +77,7 @@ class AboutPage extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          "خبيرك في عالم النباتات",
+                          'plant_expert'.tr(),
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey[500],
@@ -84,8 +89,8 @@ class AboutPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  "عن التطبيق",
-                  style: TextStyle(
+                  'about'.tr(),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: greenColor,
@@ -93,17 +98,22 @@ class AboutPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Flora AI يساعدك على تحديد أمراض النباتات باستخدام الذكاء الاصطناعي. فقط التقط صورة لنبتتك واحصل على التشخيص والعلاج فوراً.",
+                  'app_description'.tr(),
                   style: TextStyle(fontSize: 14, color: textColor, height: 1.6),
                 ),
                 const SizedBox(height: 20),
                 Divider(color: Colors.grey[300]),
                 const SizedBox(height: 10),
-                _infoRow(Icons.info_outline, "الإصدار", "1.0.0", textColor),
+                _infoRow(
+                  Icons.info_outline,
+                  'version'.tr(),
+                  "1.0.0",
+                  textColor,
+                ),
                 const SizedBox(height: 10),
                 _infoRow(
                   Icons.person_outline,
-                  "المطور",
+                  'developer'.tr(),
                   "Aslm Kaled",
                   textColor,
                 ),

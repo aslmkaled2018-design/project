@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+
+ValueNotifier<String> appLanguageNotifier = ValueNotifier("ar");
 
 class LanguagePage extends StatefulWidget {
   const LanguagePage({super.key});
@@ -8,8 +11,6 @@ class LanguagePage extends StatefulWidget {
 }
 
 class _LanguagePageState extends State<LanguagePage> {
-  String selectedLang = "Arabic";
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -18,11 +19,14 @@ class _LanguagePageState extends State<LanguagePage> {
     final cardColor = isDark ? Colors.grey[850]! : Colors.white;
     final shadowColor =
         isDark ? Colors.black : const Color.fromARGB(255, 149, 234, 179);
+
+    final currentLang = context.locale.languageCode;
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          "اللغة",
+        title: Text(
+          'language'.tr(),
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -33,35 +37,32 @@ class _LanguagePageState extends State<LanguagePage> {
         padding: EdgeInsets.all(16),
         children: [
           SizedBox(height: 10),
-
           Text(
-            "اختر لغة التطبيق",
+            'choose_language'.tr(),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
           ),
-
           SizedBox(height: 12),
-
           _langCard(
-            flag: "🇸🇦",
-            title: "العربية",
-            subtitle: "Arabic",
-            value: "Arabic",
+            flag: '🇸🇦',
+            title: 'arabic'.tr(),
+            subtitle: 'العربية',
+            locale: Locale('ar'),
+            isSelected: currentLang == 'ar',
             isDark: isDark,
             cardColor: cardColor,
             shadowColor: shadowColor,
           ),
-
           SizedBox(height: 10),
-
           _langCard(
-            flag: "🇬🇧",
-            title: "الإنجليزية",
-            subtitle: "English",
-            value: "English",
+            flag: '🇬🇧',
+            title: 'english'.tr(),
+            subtitle: 'English',
+            locale: Locale('en'),
+            isSelected: currentLang == 'en',
             isDark: isDark,
             cardColor: cardColor,
             shadowColor: shadowColor,
@@ -75,15 +76,22 @@ class _LanguagePageState extends State<LanguagePage> {
     required String flag,
     required String title,
     required String subtitle,
-    required String value,
+    required Locale locale,
+    required bool isSelected,
     required bool isDark,
     required Color cardColor,
     required Color shadowColor,
   }) {
-    final bool isSelected = selectedLang == value;
-
     return GestureDetector(
-      onTap: () => setState(() => selectedLang = value),
+      onTap: () async {
+        await context.setLocale(locale);
+        appLanguageNotifier.value = locale.languageCode;
+        print("🌍 Language changed to: ${appLanguageNotifier.value}");
+        setState(() {});
+        if (context.mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
@@ -115,7 +123,7 @@ class _LanguagePageState extends State<LanguagePage> {
                     color:
                         isSelected
                             ? Color.fromARGB(255, 56, 114, 64)
-                            : Colors.black,
+                            : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 Text(

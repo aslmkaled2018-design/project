@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'aboutpage.dart';
 import 'clear_scan_history.dart';
 import 'edit_profile.dart';
@@ -6,7 +7,6 @@ import 'help&supportpage.dart';
 import 'languagepage.dart';
 import 'notificatinpage.dart';
 import 'clear_all_history.dart';
-
 import 'themepage.dart';
 
 class SettingPage extends StatefulWidget {
@@ -34,8 +34,11 @@ class _SettingPageState extends State<SettingPage> {
       backgroundColor: bgColor,
       appBar: AppBar(
         title: Text(
-          "الإعدادات",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          'settings'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: greenColor,
         centerTitle: true,
@@ -45,11 +48,10 @@ class _SettingPageState extends State<SettingPage> {
         padding: const EdgeInsets.all(16),
         children: [
           const SizedBox(height: 10),
-
-          _sectionTitle("الحساب"),
+          _sectionTitle('account'.tr()),
           _settingCard(
             Icons.person,
-            "تعديل الملف الشخصي",
+            'edit_profile'.tr(),
             cardColor,
             iconBg,
             shadowColor,
@@ -61,13 +63,11 @@ class _SettingPageState extends State<SettingPage> {
               ).then((_) => setState(() {}));
             },
           ),
-
           const SizedBox(height: 12),
-
-          _sectionTitle("التطبيق"),
+          _sectionTitle('app'.tr()),
           _settingCard(
             Icons.notifications,
-            "الإشعارات",
+            'notifications'.tr(),
             cardColor,
             iconBg,
             shadowColor,
@@ -81,7 +81,7 @@ class _SettingPageState extends State<SettingPage> {
           ),
           _settingCard(
             Icons.language,
-            "اللغة",
+            'language'.tr(),
             cardColor,
             iconBg,
             shadowColor,
@@ -95,7 +95,7 @@ class _SettingPageState extends State<SettingPage> {
           ),
           _settingCard(
             Icons.color_lens,
-            "المظهر",
+            'appearance'.tr(),
             cardColor,
             iconBg,
             shadowColor,
@@ -107,12 +107,11 @@ class _SettingPageState extends State<SettingPage> {
               ).then((_) => setState(() {}));
             },
           ),
-
           const SizedBox(height: 12),
-          _sectionTitle('الخصوصية'),
+          _sectionTitle('privacy'.tr()),
           _settingCard(
             Icons.delete_outline,
-            "مسح سجل الفحوصات",
+            'clear_scan_history'.tr(),
             cardColor,
             iconBg,
             shadowColor,
@@ -126,7 +125,7 @@ class _SettingPageState extends State<SettingPage> {
           ),
           _settingCard(
             Icons.delete_forever_outlined,
-            "مسح جميع البيانات",
+            'clear_all_data'.tr(),
             cardColor,
             iconBg,
             shadowColor,
@@ -138,13 +137,11 @@ class _SettingPageState extends State<SettingPage> {
               ).then((_) => setState(() {}));
             },
           ),
-
           const SizedBox(height: 12),
-
-          _sectionTitle("المساعدة"),
+          _sectionTitle('help'.tr()),
           _settingCard(
             Icons.help_outline,
-            "المساعدة والدعم",
+            'help_support'.tr(),
             cardColor,
             iconBg,
             shadowColor,
@@ -158,7 +155,7 @@ class _SettingPageState extends State<SettingPage> {
           ),
           _settingCard(
             Icons.info_outline,
-            "عن التطبيق",
+            'about_app'.tr(),
             cardColor,
             iconBg,
             shadowColor,
@@ -177,7 +174,6 @@ class _SettingPageState extends State<SettingPage> {
 
   Widget _sectionTitle(String title) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black87;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10, right: 4),
       child: Text(
@@ -185,7 +181,7 @@ class _SettingPageState extends State<SettingPage> {
         style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.bold,
-          color: textColor,
+          color: isDark ? Colors.white : Colors.black87,
         ),
       ),
     );

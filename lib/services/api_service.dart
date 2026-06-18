@@ -8,7 +8,7 @@ class ApiService {
   static const int _maxRetries = 3;
   static const Duration _retryDelay = Duration(seconds: 2);
 
-  static Future<Options> _options({bool requiresAuth = true}) async {
+  static Future<Options> _options({bool requiresAuth = true, String? languageCode}) async {
     final Map<String, dynamic> headers = {};
     if (requiresAuth) {
       final token = await AuthStorage.getToken();
@@ -16,10 +16,13 @@ class ApiService {
         headers['X-JWT-Token'] = 'Bearer $token';
       }
     }
+    if (languageCode != null) {
+      headers['Accept-Language'] = languageCode;
+    }
     return Options(headers: headers);
   }
 
-  static Future<Map<String, dynamic>> getPlantCare(String plantName) async {
+  static Future<Map<String, dynamic>> getPlantCare(String plantName, {String? languageCode}) async {
     if (plantName.trim().isEmpty) {
       return {'success': false, 'message': 'Plant name is empty'};
     }
@@ -27,7 +30,7 @@ class ApiService {
     final encodedName = Uri.encodeComponent(plantName.trim());
     print("🔍 Getting care for: $encodedName"); // ← debug
 
-    return await get('/api/Conditions/plant/$encodedName', requiresAuth: true);
+    return await get('/api/Conditions/plant/$encodedName', requiresAuth: true, languageCode: languageCode);
   }
 
   static dynamic _parseResponse(Response response) {
@@ -42,11 +45,12 @@ class ApiService {
     String endpoint, {
     Map<String, dynamic>? queryParams,
     bool requiresAuth = true,
+    String? languageCode,
   }) async {
     int retryCount = 0;
     while (retryCount < _maxRetries) {
       try {
-        final options = await _options(requiresAuth: requiresAuth);
+        final options = await _options(requiresAuth: requiresAuth, languageCode: languageCode);
         final response = await _dio.get(
           endpoint,
           queryParameters: queryParams,
@@ -73,11 +77,12 @@ class ApiService {
     bool requiresAuth = false,
     bool isMultipart = false,
     FormData? formData,
+    String? languageCode,
   }) async {
     int retryCount = 0;
     while (retryCount < _maxRetries) {
       try {
-        final options = await _options(requiresAuth: requiresAuth);
+        final options = await _options(requiresAuth: requiresAuth, languageCode: languageCode);
         if (isMultipart) options.contentType = 'multipart/form-data';
         final response = await _dio.post(
           endpoint,
@@ -103,11 +108,12 @@ class ApiService {
     String endpoint, {
     Map<String, dynamic>? body,
     bool requiresAuth = true,
+    String? languageCode,
   }) async {
     int retryCount = 0;
     while (retryCount < _maxRetries) {
       try {
-        final options = await _options(requiresAuth: requiresAuth);
+        final options = await _options(requiresAuth: requiresAuth, languageCode: languageCode);
         final response = await _dio.put(endpoint, data: body, options: options);
         return {'success': true, 'data': _parseResponse(response)};
       } on DioException catch (e) {
@@ -173,7 +179,7 @@ class ApiService {
     String password,
   ) async {
     final result = await post(
-      '/api/auth/login',
+      '/api/Auth/login',
       body: {'email': email, 'password': password},
     );
     if (result['success']) {
@@ -195,17 +201,16 @@ class ApiService {
     required String lastName,
     required String email,
     required String password,
-    String phone = '',
   }) async {
     final result = await post(
-      '/api/auth/register',
+      '/api/Auth/register',
       body: {
         'fullName': '$firstName $lastName',
         'email': email,
         'password': password,
-        'phone': phone,
       },
     );
+
     if (result['success'] && result['data']['token'] != null) {
       final data = result['data'];
       final user = data['user'] ?? data;
@@ -216,6 +221,7 @@ class ApiService {
         fullName: user['fullName'] ?? '$firstName $lastName',
       );
     }
+    print("📝 REGISTER RESULT: $result"); // ← أضف دي
     return result;
   }
 
@@ -248,15 +254,24 @@ class ApiService {
     required String plantType,
     required String conditionName,
     required String detectedCategory,
+    String? languageCode,
+    String? scanId,
+    String? scannedAt,
   }) async {
+    final body = <String, dynamic>{
+      'plantType': plantType,
+      'conditionName': conditionName,
+      'detectedCategory': detectedCategory,
+    };
+    
+    if (scanId != null) body['scanId'] = scanId;
+    if (scannedAt != null) body['scannedAt'] = scannedAt;
+
     final result = await post(
       '/api/diagnosis/scan',
-      body: {
-        'plantType': plantType,
-        'conditionName': conditionName,
-        'detectedCategory': detectedCategory,
-      },
+      body: body,
       requiresAuth: true,
+      languageCode: languageCode,
     );
     // print("📥 Scan result: $result");
     return result;

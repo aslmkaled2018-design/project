@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+import '../main.dart';
 
-ValueNotifier<String> appThemeNotifier = ValueNotifier("Light");
-String get appTheme => appThemeNotifier.value;
+final ValueNotifier<Locale> appLocaleNotifier = ValueNotifier(
+  const Locale('ar'),
+);
 
 class ThemePage extends StatefulWidget {
   const ThemePage({super.key});
@@ -19,44 +22,48 @@ class _ThemePageState extends State<ThemePage> {
     final cardColor = isDark ? Colors.grey[850]! : Colors.white;
     final shadowColor =
         isDark ? Colors.black : const Color.fromARGB(255, 149, 234, 179);
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          "المظهر",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'theme'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 56, 114, 64),
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: ListView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         children: [
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
-            "اختر مظهر التطبيق",
+            'choose_theme'.tr(),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           _themeCard(
             icon: Icons.light_mode,
-            title: "الوضع الفاتح",
-            subtitle: "Light Mode",
+            title: 'light_mode'.tr(),
+            subtitle: 'Light Mode',
             value: "Light",
             isDark: isDark,
             cardColor: cardColor,
             shadowColor: shadowColor,
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _themeCard(
             icon: Icons.dark_mode,
-            title: "الوضع الداكن",
-            subtitle: "Dark Mode",
+            title: 'dark_mode'.tr(),
+            subtitle: 'Dark Mode',
             value: "Dark",
             isDark: isDark,
             cardColor: cardColor,
@@ -76,8 +83,7 @@ class _ThemePageState extends State<ThemePage> {
     required Color cardColor,
     required Color shadowColor,
   }) {
-    final bool isSelected = appTheme == value;
-
+    final bool isSelected = appThemeNotifier.value == value;
     return GestureDetector(
       onTap: () {
         appThemeNotifier.value = value;
@@ -85,29 +91,34 @@ class _ThemePageState extends State<ThemePage> {
         Navigator.pop(context);
       },
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? Color.fromARGB(255, 219, 243, 221) : cardColor,
+          color:
+              isSelected ? const Color.fromARGB(255, 219, 243, 221) : cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color:
                 isSelected
-                    ? Color.fromARGB(255, 56, 114, 64)
+                    ? const Color.fromARGB(255, 56, 114, 64)
                     : Colors.transparent,
             width: 2,
           ),
           boxShadow: [
-            BoxShadow(blurRadius: 8, color: shadowColor, offset: Offset(2, 3)),
+            BoxShadow(
+              blurRadius: 8,
+              color: shadowColor,
+              offset: const Offset(2, 3),
+            ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: EdgeInsets.all(10),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color:
                     isSelected
-                        ? Color.fromARGB(255, 56, 114, 64)
+                        ? const Color.fromARGB(255, 56, 114, 64)
                         : (isDark ? Colors.grey[700]! : Colors.grey[200]!),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -117,7 +128,7 @@ class _ThemePageState extends State<ThemePage> {
                 size: 26,
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -128,8 +139,10 @@ class _ThemePageState extends State<ThemePage> {
                     fontWeight: FontWeight.bold,
                     color:
                         isSelected
-                            ? Color.fromARGB(255, 56, 114, 64)
-                            : Colors.black,
+                            ? const Color.fromARGB(255, 56, 114, 64)
+                            : (isDark
+                                ? Colors.white
+                                : Colors.black), // ← الفيكس
                   ),
                 ),
                 Text(
@@ -138,9 +151,9 @@ class _ThemePageState extends State<ThemePage> {
                 ),
               ],
             ),
-            Spacer(),
+            const Spacer(),
             if (isSelected)
-              Icon(
+              const Icon(
                 Icons.check_circle,
                 color: Color.fromARGB(255, 56, 114, 64),
                 size: 26,

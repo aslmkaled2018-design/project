@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'MyGarden.dart';
 
 class HealthRecordSection extends StatefulWidget {
   final plant Plant;
-
   const HealthRecordSection({super.key, required this.Plant});
 
   @override
@@ -11,9 +11,7 @@ class HealthRecordSection extends StatefulWidget {
 }
 
 class _HealthRecordSectionState extends State<HealthRecordSection> {
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
 
   @override
   Widget build(BuildContext context) {
@@ -29,18 +27,18 @@ class _HealthRecordSectionState extends State<HealthRecordSection> {
                 size: 60,
                 color: Colors.grey[400],
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               Text(
-                'لا يوجد سجلات صحية',
-                style: TextStyle(color: Colors.grey, fontSize: 15),
+                'no_health_records'.tr(),
+                style: const TextStyle(color: Colors.grey, fontSize: 15),
               ),
             ],
           ),
         )
         : ListView.separated(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           itemCount: records.length,
-          separatorBuilder: (_, __) => SizedBox(height: 8),
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final record = records[index];
             return ListTile(
@@ -54,49 +52,61 @@ class _HealthRecordSectionState extends State<HealthRecordSection> {
                         ),
                         title: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.coronavirus_outlined,
                               color: Color.fromARGB(255, 56, 114, 64),
                             ),
-                            SizedBox(width: 8),
-                            Text(
-                              'تفاصيل المرض',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color.fromARGB(255, 56, 114, 64),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'disease_details'.tr(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color.fromARGB(255, 56, 114, 64),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              ' التاريخ: ${_formatDate(record.date)}',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 13,
+                        content: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${'date'.tr()}: ${_formatDate(record.date)}',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 12),
-                            Text(
-                              record.treatment,
-                              style: TextStyle(fontSize: 15, height: 1.5),
-                            ),
-                          ],
+                              const SizedBox(height: 12),
+                              Text(
+                                record.treatment,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         actions: [
                           ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color.fromARGB(255, 56, 114, 64),
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                56,
+                                114,
+                                64,
+                              ),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                             onPressed: () => Navigator.pop(context),
-                            child: Text('إغلاق'),
+                            child: Text('close'.tr()),
                           ),
                         ],
                       ),
@@ -105,8 +115,8 @@ class _HealthRecordSectionState extends State<HealthRecordSection> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              tileColor: Color.fromARGB(255, 236, 255, 237),
-              leading: CircleAvatar(
+              tileColor: const Color.fromARGB(255, 236, 255, 237),
+              leading: const CircleAvatar(
                 backgroundColor: Color.fromARGB(255, 56, 114, 64),
                 child: Icon(
                   Icons.coronavirus_outlined,
@@ -118,17 +128,17 @@ class _HealthRecordSectionState extends State<HealthRecordSection> {
                 record.disease.length > 40
                     ? '${record.disease.substring(0, 40)}...'
                     : record.disease,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                   color: Color.fromARGB(255, 56, 114, 64),
                 ),
               ),
               subtitle: Text(
-                'التاريخ ${_formatDate(record.date)}',
+                '${'date'.tr()} ${_formatDate(record.date)}',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
-              trailing: Icon(
+              trailing: const Icon(
                 Icons.arrow_forward_ios,
                 size: 14,
                 color: Colors.grey,

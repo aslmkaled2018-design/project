@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:project/Disease_translations.dart';
@@ -61,18 +62,15 @@ class _BotaipageState extends State<Botaipage> {
 
   Future<void> analyzeImage() async {
     if (imagefile == null) return;
-
-    print("📸 analyzeImage STARTED");
+    final lang = context.locale.languageCode;
     setState(() => isAnalyzing = true);
 
-    print("🤖 Calling processImage...");
     final label = await _inferenceService.processImage(imagefile!);
-    print("🎯 Label returned: $label");
 
     if (label == "INVALID_IMAGE") {
       setState(() {
         isAnalyzing = false;
-        diseaseResult = "الصورة مش ورقة نبات، ركز على ورقة النبتة وحاول تاني";
+        diseaseResult = 'invalid_image'.tr();
         showNameButton = false;
         showTreatmentBox = false;
         showSaveButton = false;
@@ -83,7 +81,7 @@ class _BotaipageState extends State<Botaipage> {
     if (label.startsWith("ERROR")) {
       setState(() {
         isAnalyzing = false;
-        diseaseResult = "حصل خطأ في التحليل، حاول تاني";
+        diseaseResult = 'analysis_error'.tr();
         showNameButton = false;
         showTreatmentBox = false;
         showSaveButton = false;
@@ -91,29 +89,34 @@ class _BotaipageState extends State<Botaipage> {
       return;
     }
 
-    print("📚 Getting disease info for: $label");
     final info = diseaseInfo[label] ?? diseaseInfo['healthy']!;
-    print("📚 Info: $info");
 
-    print("🌐 Calling API...");
     final serverResult = await ApiService.scanPlant(
       plantType: info['plantType']!,
       conditionName: info['conditionName']!,
       detectedCategory: info['detectedCategory']!,
+      languageCode: lang,
     );
-    print("🌐 API result: $serverResult");
 
     String finalDisease = info['disease']!;
-    String finalTreatment = info['treatment']!;
+    String finalTreatment = '';
 
     if (serverResult['success'] && serverResult['data'] != null) {
       final data = serverResult['data'];
-      finalDisease = info['disease']!;
-      finalTreatment =
-          data['treatment'] ?? data['careInstructions'] ?? info['treatment']!;
-    }
+      final t = data['treatment'] ?? '';
+      if (t is String && t.isNotEmpty) {
+        finalTreatment = t;
+      }
 
-    print("✅ Final result: $finalDisease");
+      if (data['careAdvice'] is Map) {
+        final advice = data['careAdvice'] as Map;
+        _careData['watering'] = advice['watering']?.toString() ?? '';
+        _careData['light'] = advice['light']?.toString() ?? '';
+        _careData['fertilizing'] = advice['fertilizing']?.toString() ?? '';
+        _careData['soil'] = advice['soil']?.toString() ?? '';
+        _careData['humidity'] = advice['humidity']?.toString() ?? '';
+      }
+    }
 
     setState(() {
       isAnalyzing = false;
@@ -125,15 +128,13 @@ class _BotaipageState extends State<Botaipage> {
     });
   }
 
-  // ← جيب رعاية النبتة من السيرفر
   Future<void> _fetchPlantCare(String plantName) async {
-    final result = await ApiService.getPlantCare(plantName);
+    final lang = context.locale.languageCode;
+    final result = await ApiService.getPlantCare(plantName, languageCode: lang);
     print("🌱 Care result: $result");
 
     if (result['success'] && result['data'] != null) {
       final data = result['data'];
-
-      // ← نتأكد من نوع البيانات
       dynamic care;
 
       if (data is List && data.isNotEmpty) {
@@ -143,16 +144,28 @@ class _BotaipageState extends State<Botaipage> {
       }
 
       if (care is Map<String, dynamic>) {
+        final treatment = care['treatment']?.toString() ?? '';
+        final careInstructions = care['careInstructions']?.toString() ?? '';
+
         setState(() {
-          _careData = {
-            'careInstructions': care['careInstructions']?.toString() ?? '',
-            'treatment': care['treatment']?.toString() ?? '',
-            'conditionName': care['conditionName']?.toString() ?? '',
-          };
+          _careData['treatment'] = treatment;
+          _careData['careInstructions'] = careInstructions;
+
+          if (care['careAdvice'] is Map) {
+            final advice = care['careAdvice'] as Map;
+            if (advice['watering'] != null)
+              _careData['watering'] = advice['watering'].toString();
+            if (advice['light'] != null)
+              _careData['light'] = advice['light'].toString();
+            if (advice['fertilizing'] != null)
+              _careData['fertilizing'] = advice['fertilizing'].toString();
+            if (advice['soil'] != null)
+              _careData['soil'] = advice['soil'].toString();
+            if (advice['humidity'] != null)
+              _careData['humidity'] = advice['humidity'].toString();
+          }
         });
         print("✅ Care data: $_careData");
-      } else {
-        print("⚠️ Unexpected data type: ${data.runtimeType}");
       }
     }
   }
@@ -180,7 +193,7 @@ class _BotaipageState extends State<Botaipage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "اسم النبتة",
+                  'plant_name'.tr(),
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -194,7 +207,7 @@ class _BotaipageState extends State<Botaipage> {
                   textAlign: TextAlign.right,
                   style: TextStyle(color: isDark ? Colors.white : Colors.black),
                   decoration: InputDecoration(
-                    hintText: "مثال: ورد، صبار، ياسمين",
+                    hintText: 'plant_name_hint'.tr(),
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     filled: true,
                     fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
@@ -227,13 +240,40 @@ class _BotaipageState extends State<Botaipage> {
                         Navigator.pop(context);
                         await _fetchPlantCare(nameController.text.trim());
                         setState(() {
+                          final name = nameController.text.trim();
+                          String replacePlant(String text) {
+                            return text
+                                .replaceAll(RegExp(r'\(\s*[Pp]lant\s*\)'), name)
+                                .replaceAll(RegExp(r'\b[Pp]lant\b'), name);
+                          }
+
+                          if (_careData['treatment'] != null) {
+                            _careData['treatment'] = replacePlant(
+                              _careData['treatment']!,
+                            );
+                          }
+                          if (_careData['careInstructions'] != null) {
+                            _careData['careInstructions'] = replacePlant(
+                              _careData['careInstructions']!,
+                            );
+                          }
+                          treatmentResult = replacePlant(treatmentResult);
+
+                          final fromTreatment = _careData['treatment'] ?? '';
+                          final fromCareInstr =
+                              _careData['careInstructions'] ?? '';
+                          if (fromTreatment.isNotEmpty) {
+                            treatmentResult = fromTreatment;
+                          } else if (fromCareInstr.isNotEmpty) {
+                            treatmentResult = fromCareInstr;
+                          }
                           showTreatmentBox = true;
                           showSaveButton = true;
                           showNameButton = false;
                         });
                       }
                     },
-                    child: const Text("تأكيد"),
+                    child: Text('confirm'.tr()),
                   ),
                 ),
               ],
@@ -278,7 +318,7 @@ class _BotaipageState extends State<Botaipage> {
                             : const Color.fromARGB(255, 56, 56, 56),
                   ),
                   title: Text(
-                    "فتح الكاميرا",
+                    'open_camera'.tr(),
                     style: TextStyle(
                       color:
                           isDark
@@ -300,7 +340,7 @@ class _BotaipageState extends State<Botaipage> {
                             : const Color.fromARGB(255, 60, 60, 60),
                   ),
                   title: Text(
-                    "اختيار من المعرض",
+                    'choose_from_gallery'.tr(),
                     style: TextStyle(
                       color:
                           isDark
@@ -315,6 +355,170 @@ class _BotaipageState extends State<Botaipage> {
                 ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> showAddPlantWithDiagnosisSheet(BuildContext context) async {
+    final XFile? newImage = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+    if (newImage == null) return;
+
+    final File newImageFile = File(newImage.path);
+    final TextEditingController newNameController = TextEditingController(
+      text: nameController.text,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Padding(
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              Text(
+                'add_new_plant'.tr(),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 56, 114, 64),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  newImageFile,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: newNameController,
+                textAlign: TextAlign.start,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                decoration: InputDecoration(
+                  labelText: 'plant_name'.tr(),
+                  filled: true,
+                  fillColor: isDark ? Colors.grey[800] : Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                      color: Color.fromARGB(255, 56, 114, 64),
+                      width: 2,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 56, 114, 64),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () async {
+                      if (newNameController.text.trim().isNotEmpty) {
+                        final newName = newNameController.text.trim();
+                        if (diseaseResult.isNotEmpty) {
+                          await ApiService.savePlant(
+                            name: newName,
+                            disease: diseaseResult,
+                            treatment: treatmentResult,
+                          );
+                        }
+
+                        setState(() {
+                          final newPlant = plant(
+                            image: newImageFile.path,
+                            name: newName,
+                          );
+
+                          if (diseaseResult.isNotEmpty) {
+                            final ci = _careData['careInstructions'] ?? '';
+                            final tr = _careData['treatment'] ?? '';
+                            newPlant.careInstructions = ci.isNotEmpty ? ci : tr;
+                            newPlant.watering = _careData['watering'];
+                            newPlant.light = _careData['light'];
+                            newPlant.fertilizing = _careData['fertilizing'];
+                            newPlant.soil = _careData['soil'];
+                            newPlant.humidity = _careData['humidity'];
+
+                            newPlant.healthRecords.add(
+                              HealthRecord(
+                                disease: diseaseResult,
+                                treatment: treatmentResult,
+                                date: DateTime.now(),
+                                hasDisease:
+                                    diseaseResult !=
+                                    diseaseInfo['healthy']!['disease'],
+                              ),
+                            );
+                          }
+
+                          myplants.add(newPlant);
+
+                          imagefile = null;
+                          showNameButton = false;
+                          showTreatmentBox = false;
+                          showSaveButton = false;
+                          diseaseResult = "";
+                          treatmentResult = "";
+                          _careData = {};
+                        });
+
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: Text('add'.tr()),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('cancel'.tr()),
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },
@@ -362,9 +566,9 @@ class _BotaipageState extends State<Botaipage> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        const Text(
-                          "حديقتي 🌿",
-                          style: TextStyle(
+                        Text(
+                          'my_garden_emoji'.tr(),
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Color.fromARGB(255, 56, 114, 64),
@@ -372,7 +576,7 @@ class _BotaipageState extends State<Botaipage> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'اختار النبتة اللي تضيف ليها نتيجة التحليل',
+                          'garden_select_hint'.tr(),
                           style: TextStyle(
                             color: Colors.grey[500],
                             fontSize: 13,
@@ -380,127 +584,161 @@ class _BotaipageState extends State<Botaipage> {
                         ),
                         const SizedBox(height: 16),
                         Expanded(
-                          child:
-                              myplants.isEmpty
-                                  ? Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.eco_outlined,
-                                        size: 60,
-                                        color: Colors.grey[400],
+                          child: GridView.builder(
+                            controller: scrollController,
+                            itemCount: myplants.length + 1,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  childAspectRatio: 0.85,
+                                ),
+                            itemBuilder: (context, index) {
+                              if (index == myplants.length) {
+                                return GestureDetector(
+                                  onTap:
+                                      () => showAddPlantWithDiagnosisSheet(
+                                        context,
                                       ),
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        'مفيش نبتات في حديقتك لسه',
-                                        style: TextStyle(
-                                          color: Colors.grey[500],
-                                          fontSize: 15,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color:
+                                          isDark
+                                              ? Colors.grey[850]!
+                                              : Colors.white,
+                                      borderRadius: BorderRadius.circular(15),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurRadius: 8,
+                                          color:
+                                              isDark
+                                                  ? Colors.black
+                                                  : const Color.fromARGB(
+                                                    255,
+                                                    149,
+                                                    234,
+                                                    179,
+                                                  ),
+                                          offset: const Offset(2, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: CustomPaint(
+                                      painter: DottedBorderPainter(),
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.add,
+                                          size: 35,
+                                          color: Color.fromARGB(
+                                            255,
+                                            56,
+                                            114,
+                                            64,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return GestureDetector(
+                                onTap: () async {
+                                  if (diseaseResult.isNotEmpty) {
+                                    await ApiService.savePlant(
+                                      name: myplants[index].name,
+                                      disease: diseaseResult,
+                                      treatment: treatmentResult,
+                                    );
+                                    setState(() {
+                                      // ← حفظ careInstructions في النبتة
+                                      final ci =
+                                          _careData['careInstructions'] ?? '';
+                                      final tr = _careData['treatment'] ?? '';
+                                      myplants[index].careInstructions =
+                                          ci.isNotEmpty ? ci : tr;
+                                      myplants[index].watering =
+                                          _careData['watering'];
+                                      myplants[index].light =
+                                          _careData['light'];
+                                      myplants[index].fertilizing =
+                                          _careData['fertilizing'];
+                                      myplants[index].soil = _careData['soil'];
+                                      myplants[index].humidity =
+                                          _careData['humidity'];
+
+                                      myplants[index].healthRecords.add(
+                                        HealthRecord(
+                                          disease: diseaseResult,
+                                          treatment: treatmentResult,
+                                          date: DateTime.now(),
+                                          hasDisease:
+                                              diseaseResult !=
+                                              diseaseInfo['healthy']!['disease'],
+                                        ),
+                                      );
+                                      imagefile = null;
+                                      showNameButton = false;
+                                      showTreatmentBox = false;
+                                      showSaveButton = false;
+                                      diseaseResult = "";
+                                      treatmentResult = "";
+                                      _careData = {};
+                                    });
+                                  }
+                                  Navigator.pop(context);
+                                },
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: Stack(
+                                    children: [
+                                      Image.file(
+                                        File(myplants[index].image),
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        left: 0,
+                                        right: 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(
+                                              0.5,
+                                            ),
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  bottomLeft: Radius.circular(
+                                                    15,
+                                                  ),
+                                                  bottomRight: Radius.circular(
+                                                    15,
+                                                  ),
+                                                ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              myplants[index].name,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],
-                                  )
-                                  : GridView.builder(
-                                    controller: scrollController,
-                                    itemCount: myplants.length,
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          crossAxisSpacing: 12,
-                                          mainAxisSpacing: 12,
-                                          childAspectRatio: 0.85,
-                                        ),
-                                    itemBuilder: (context, index) {
-                                      return GestureDetector(
-                                        onTap: () async {
-                                          if (diseaseResult.isNotEmpty) {
-                                            await ApiService.savePlant(
-                                              name: myplants[index].name,
-                                              disease: diseaseResult,
-                                              treatment: treatmentResult,
-                                            );
-                                            setState(() {
-                                              if (_careData.isNotEmpty) {
-                                                myplants[index]
-                                                        .careInstructions =
-                                                    _careData['careInstructions'] ??
-                                                    '';
-                                              }
-                                              myplants[index].healthRecords.add(
-                                                HealthRecord(
-                                                  disease: diseaseResult,
-                                                  treatment: treatmentResult,
-                                                  date: DateTime.now(),
-                                                  hasDisease:
-                                                      diseaseResult !=
-                                                      diseaseInfo['healthy']!['disease'],
-                                                ),
-                                              );
-                                              imagefile = null;
-                                              showNameButton = false;
-                                              showTreatmentBox = false;
-                                              showSaveButton = false;
-                                              diseaseResult = "";
-                                              treatmentResult = "";
-                                              _careData = {};
-                                            });
-                                          }
-                                          Navigator.pop(context);
-                                        },
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            15,
-                                          ),
-                                          child: Stack(
-                                            children: [
-                                              Image.file(
-                                                File(myplants[index].image),
-                                                width: double.infinity,
-                                                height: double.infinity,
-                                                fit: BoxFit.cover,
-                                              ),
-                                              Positioned(
-                                                bottom: 0,
-                                                left: 0,
-                                                right: 0,
-                                                child: Container(
-                                                  padding: const EdgeInsets.all(
-                                                    8,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black
-                                                        .withOpacity(0.5),
-                                                    borderRadius:
-                                                        const BorderRadius.only(
-                                                          bottomLeft:
-                                                              Radius.circular(
-                                                                15,
-                                                              ),
-                                                          bottomRight:
-                                                              Radius.circular(
-                                                                15,
-                                                              ),
-                                                        ),
-                                                  ),
-                                                  child: Center(
-                                                    child: Text(
-                                                      myplants[index].name,
-                                                      style: const TextStyle(
-                                                        fontSize: 16,
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
                                   ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                         const SizedBox(height: 10),
                         SizedBox(
@@ -519,7 +757,7 @@ class _BotaipageState extends State<Botaipage> {
                               ),
                             ),
                             onPressed: () => Navigator.pop(context),
-                            child: const Text("إغلاق"),
+                            child: Text('close'.tr()),
                           ),
                         ),
                       ],
@@ -555,9 +793,12 @@ class _BotaipageState extends State<Botaipage> {
         centerTitle: true,
         backgroundColor: greenColor,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text(
-          "تحديد النبتة",
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'identify_plant'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       backgroundColor: bgColor,
@@ -568,27 +809,24 @@ class _BotaipageState extends State<Botaipage> {
             Padding(
               padding: const EdgeInsets.only(right: 8, top: 8, bottom: 4),
               child: Text(
-                'تعليمات التصوير',
+                'shooting_instructions'.tr(),
                 style: TextStyle(
                   fontSize: 18,
                   color: textColor,
                   fontWeight: FontWeight.bold,
                 ),
-                textAlign: TextAlign.end,
+                textAlign: TextAlign.start,
               ),
             ),
             Padding(
               padding: const EdgeInsets.only(right: 8, bottom: 8),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _tipRow(
-                    'استخدم إضاءة جيدة (يفضل الإضاءة الطبيعية)',
-                    textColor,
-                  ),
-                  _tipRow('ثبّت الكاميرا جيداً', textColor),
-                  _tipRow('اقترب من النبتة', textColor),
-                  _tipRow('ركّز على الجزء المصاب من الورقة', textColor),
+                  _tipRow('tip_lighting'.tr(), textColor),
+                  _tipRow('tip_steady'.tr(), textColor),
+                  _tipRow('tip_close'.tr(), textColor),
+                  _tipRow('tip_focus'.tr(), textColor),
                 ],
               ),
             ),
@@ -639,7 +877,7 @@ class _BotaipageState extends State<Botaipage> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'اختار صورة ورقة النبتة',
+                                  'choose_image'.tr(),
                                   style: TextStyle(
                                     fontSize: screenWidth * 0.042,
                                     fontWeight: FontWeight.bold,
@@ -648,7 +886,7 @@ class _BotaipageState extends State<Botaipage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'تأكد إن الصورة واضحة وعلى ورقة النبتة',
+                                  'image_clear_hint'.tr(),
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.grey[500],
@@ -676,10 +914,13 @@ class _BotaipageState extends State<Botaipage> {
                       ),
                       onPressed: showimagepickeroptions,
                       icon: const Icon(Icons.add_photo_alternate),
-                      label: const Text('اختار صورة'),
+                      label: Text('choose_photo'.tr()),
                     )
-                    : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    : Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 10,
+                      runSpacing: 10,
                       children: [
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
@@ -699,10 +940,9 @@ class _BotaipageState extends State<Botaipage> {
                                   )
                                   : const Icon(Icons.search),
                           label: Text(
-                            isAnalyzing ? 'جاري التحليل...' : 'تحليل الصورة',
+                            isAnalyzing ? 'analyzing'.tr() : 'analyze'.tr(),
                           ),
                         ),
-                        const SizedBox(width: 10),
                         TextButton.icon(
                           onPressed:
                               () => setState(() {
@@ -718,9 +958,9 @@ class _BotaipageState extends State<Botaipage> {
                             Icons.delete_outline,
                             color: Colors.red,
                           ),
-                          label: const Text(
-                            'حذف',
-                            style: TextStyle(color: Colors.red),
+                          label: Text(
+                            'delete_image'.tr(),
+                            style: const TextStyle(color: Colors.red),
                           ),
                         ),
                       ],
@@ -747,7 +987,7 @@ class _BotaipageState extends State<Botaipage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    'نتيجة التحليل',
+                    'analysis_result'.tr(),
                     style: TextStyle(
                       fontSize: screenWidth * 0.045,
                       fontWeight: FontWeight.bold,
@@ -787,11 +1027,11 @@ class _BotaipageState extends State<Botaipage> {
                   ),
                   onPressed: showNameSheet,
                   icon: const Icon(Icons.edit),
-                  label: const Text('إدخال اسم النبتة'),
+                  label: Text('enter_plant_name'.tr()),
                 ),
               ),
             ),
-          if (showTreatmentBox && treatmentResult.isNotEmpty)
+          if (showTreatmentBox)
             Container(
               padding: EdgeInsets.all(screenWidth * 0.05),
               margin: const EdgeInsets.only(bottom: 12),
@@ -811,7 +1051,7 @@ class _BotaipageState extends State<Botaipage> {
                 children: [
                   Center(
                     child: Text(
-                      'خطة العلاج',
+                      'treatment_plan_title'.tr(),
                       style: TextStyle(
                         fontSize: screenWidth * 0.045,
                         fontWeight: FontWeight.bold,
@@ -820,15 +1060,35 @@ class _BotaipageState extends State<Botaipage> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
-                    treatmentResult,
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.038,
-                      color: textColor,
-                      height: 1.8,
-                    ),
-                  ),
+                  treatmentResult.isNotEmpty
+                      ? Text(
+                        treatmentResult,
+                        textAlign: TextAlign.start,
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.038,
+                          color: textColor,
+                          height: 1.8,
+                        ),
+                      )
+                      : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.grey[500],
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'no_treatment_available'.tr(),
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.037,
+                              color: Colors.grey[500],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
+                      ),
                 ],
               ),
             ),
@@ -853,7 +1113,7 @@ class _BotaipageState extends State<Botaipage> {
                   onPressed:
                       () => showGardenSheet(context, screenWidth, screenHeight),
                   icon: const Icon(Icons.save_alt),
-                  label: const Text('حفظ في حديقتي'),
+                  label: Text('save_to_garden'.tr()),
                 ),
               ),
             ),
@@ -867,14 +1127,19 @@ class _BotaipageState extends State<Botaipage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(text, style: TextStyle(fontSize: 13, color: textColor)),
-          const SizedBox(width: 6),
-          const Icon(
-            Icons.circle,
-            size: 6,
-            color: Color.fromARGB(255, 56, 114, 64),
+          const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Icon(
+              Icons.circle,
+              size: 6,
+              color: Color.fromARGB(255, 56, 114, 64),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(text, style: TextStyle(fontSize: 13, color: textColor)),
           ),
         ],
       ),

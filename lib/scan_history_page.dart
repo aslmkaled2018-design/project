@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'MyGarden.dart';
 
-// ── صفحة سجل الفحوصات ──────────────────────────────────────────
 class ScanHistoryPage extends StatefulWidget {
   const ScanHistoryPage({super.key});
 
@@ -11,7 +11,6 @@ class ScanHistoryPage extends StatefulWidget {
 }
 
 class _ScanHistoryPageState extends State<ScanHistoryPage> {
-  // جمع كل الفحوصات من كل النباتات
   List<Map<String, dynamic>> getAllScans() {
     List<Map<String, dynamic>> scans = [];
     for (final p in myplants) {
@@ -19,7 +18,6 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
         scans.add({'plant': p, 'record': record});
       }
     }
-    // ترتيب من الأحدث للأقدم
     scans.sort(
       (a, b) => (b['record'] as HealthRecord).date.compareTo(
         (a['record'] as HealthRecord).date,
@@ -28,9 +26,7 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
     return scans;
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
 
   @override
   Widget build(BuildContext context) {
@@ -41,15 +37,17 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
     final shadowColor =
         isDark ? Colors.black : const Color.fromARGB(255, 149, 234, 179);
     const greenColor = Color.fromARGB(255, 56, 114, 64);
-
     final scans = getAllScans();
 
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          'سجل الفحوصات',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'scan_history_title'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: greenColor,
@@ -68,7 +66,7 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'لا يوجد فحوصات بعد',
+                      'no_scans_yet'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[500],
@@ -77,7 +75,7 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'افحص نبتة من صفحة تحديد النبتة',
+                      'no_scans_hint'.tr(),
                       style: TextStyle(fontSize: 13, color: Colors.grey[400]),
                     ),
                   ],
@@ -90,7 +88,6 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
                 itemBuilder: (context, index) {
                   final plantObj = scans[index]['plant'] as plant;
                   final record = scans[index]['record'] as HealthRecord;
-
                   return GestureDetector(
                     onTap:
                         () => Navigator.push(
@@ -117,7 +114,6 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
                       ),
                       child: Row(
                         children: [
-                          // صورة النبتة
                           ClipRRect(
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(16),
@@ -131,7 +127,6 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          // المعلومات
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -140,7 +135,7 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
                                 children: [
                                   Text(
                                     plantObj.name,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                       color: greenColor,
@@ -216,20 +211,16 @@ class _ScanHistoryPageState extends State<ScanHistoryPage> {
   }
 }
 
-// ── صفحة تفاصيل الفحص ──────────────────────────────────────────
 class ScanDetailPage extends StatelessWidget {
   final plant plantObj;
   final HealthRecord record;
-
   const ScanDetailPage({
     super.key,
     required this.plantObj,
     required this.record,
   });
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _formatDate(DateTime date) => '${date.day}/${date.month}/${date.year}';
 
   @override
   Widget build(BuildContext context) {
@@ -245,9 +236,12 @@ class ScanDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
-        title: const Text(
-          'تفاصيل الفحص',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          'scan_details'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         centerTitle: true,
         backgroundColor: greenColor,
@@ -257,7 +251,6 @@ class ScanDetailPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // صورة النبتة
             ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Image.file(
@@ -268,8 +261,6 @@ class ScanDetailPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // اسم النبتة والتاريخ
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -290,7 +281,7 @@ class ScanDetailPage extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     plantObj.name,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: greenColor,
@@ -311,8 +302,6 @@ class ScanDetailPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-
-            // المرض
             _infoCard(
               cardColor: cardColor,
               shadowColor: shadowColor,
@@ -321,25 +310,24 @@ class ScanDetailPage extends StatelessWidget {
                       ? Icons.coronavirus_outlined
                       : Icons.check_circle_outline,
               iconColor: record.hasDisease ? Colors.red[400]! : Colors.green,
-              title: 'المرض المكتشف',
+              title: 'discovered_disease'.tr(),
               content: record.disease,
               textColor: textColor,
               contentColor: record.hasDisease ? Colors.red[400]! : Colors.green,
             ),
-            const SizedBox(height: 12),
-
-            // العلاج
-            if (record.treatment.isNotEmpty)
+            if (record.treatment.isNotEmpty) ...[
+              const SizedBox(height: 12),
               _infoCard(
                 cardColor: cardColor,
                 shadowColor: shadowColor,
                 icon: Icons.healing,
                 iconColor: greenColor,
-                title: 'خطة العلاج',
+                title: 'treatment_plan'.tr(),
                 content: record.treatment,
                 textColor: textColor,
                 contentColor: textColor,
               ),
+            ],
           ],
         ),
       ),
